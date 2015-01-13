@@ -63,12 +63,96 @@ class Player < NPC
 
 			elsif @inventory.get_item(item).is_a?(Armor)
 				if @inventory.get_item(item).slot == 'head'
+					if @armor_head == nil
+						puts("Equipping #{item}.")
+						@armor_head = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					else
+						puts("Unequipping #{@armor_head.name}.")
+						@inventory.add_item(@armor_head.name, @armor_head)
+						puts("Equipping #{item}.")
+						@armor_head = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					end
+
 				elsif @inventory.get_item(item).slot == 'neck'
+					if @armor_neck == nil
+						puts("Equipping #{item}.")
+						@armor_neck = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					else
+						puts("Unequipping #{@armor_neck.name}.")
+						@inventory.add_item(@armor_neck.name, @armor_neck)
+						puts("Equipping #{item}.")
+						@armor_neck = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					end
+
 				elsif @inventory.get_item(item).slot == 'body'
+					if @armor_body == nil
+						puts("Equipping #{item}.")
+						@armor_body = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					else
+						puts("Unequipping #{@armor_body.name}.")
+						@inventory.add_item(@armor_body.name, @armor_body)
+						puts("Equipping #{item}.")
+						@armor_body = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					end
+
 				elsif @inventory.get_item(item).slot == 'arms'
+					if @armor_arms == nil
+						puts("Equipping #{item}.")
+						@armor_arms = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					else
+						puts("Unequipping #{@armor_arms.name}.")
+						@inventory.add_item(@armor_arms.name, @armor_arms)
+						puts("Equipping #{item}.")
+						@armor_arms = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					end
+
 				elsif @inventory.get_item(item).slot == 'hands'
+					if @armor_hands == nil
+						puts("Equipping #{item}.")
+						@armor_hands = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					else
+						puts("Unequipping #{@armor_hands.name}.")
+						@inventory.add_item(@armor_hands.name, @armor_hands)
+						puts("Equipping #{item}.")
+						@armor_hands = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					end
+
 				elsif @inventory.get_item(item).slot == 'legs'
+					if @armor_legs == nil
+						puts("Equipping #{item}.")
+						@armor_legs = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					else
+						puts("Unequipping #{@armor_legs.name}.")
+						@inventory.add_item(@armor_legs.name, @armor_legs)
+						puts("Equipping #{item}.")
+						@armor_legs = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					end
+
 				elsif @inventory.get_item(item).slot == 'feet'
+					if @armor_feet == nil
+						puts("Equipping #{item}.")
+						@armor_feet = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					else
+						puts("Unequipping #{@armor_feet.name}.")
+						@inventory.add_item(@armor_feet.name, @armor_feet)
+						puts("Equipping #{item}.")
+						@armor_feet = @inventory.get_item(item)
+						@inventory.remove_item(item)
+					end
+
 				else
 					# do nothing
 				end
@@ -297,6 +381,12 @@ class MonsterEncounter
 		if rand(100) >= 50
 			game.insert_text("You swing your weapon at the #{@monster.name} and score a hit!")
 			@monster.health -= 10
+			if @game.player.weapon == nil
+				@game.player.skills.skill_up("Hand-to-Hand", @game.player.skills.skills["Hand-to-Hand"], @game)
+			else
+				@game.player.skills.skill_up(@game.player.weapon.skill_required, @game.player.skills.skills["Hand-to-Hand"], @game)
+			end
+			
 			if @monster.health <= 0
 				game.insert_text("You have defeated the #{@monster.name}!")
 				game.state = 'normal'
@@ -338,10 +428,10 @@ class Skills
 	end
 
 	# all skills have a (100.0 - current skill value)% chance of increasing each time they're used
-	def skill_up(skill, value)
+	def skill_up(skill, value, game)
 		if rand(100.0) >= value
 			@skills[skill] += 0.1
-			puts "Your #{skill} skill has increased to #{@skills[skill]}!"
+			game.insert_text("Your #{skill} skill has increased to #{@skills[skill]}!")
 		else
 			# no increase
 		end
@@ -355,6 +445,8 @@ class Game
 	def initialize
 		@game_map = GameMap.new
 		@state = 'pregame'
+		# init_weapons
+		# init_armor
 
 		# create and configure root GUI window
 		@root = TkRoot.new
