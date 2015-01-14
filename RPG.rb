@@ -28,8 +28,10 @@ end
 
 class Player < NPC
 	attr_accessor :level, :name, :health, :mana, :strength, :dexterity, :agility, :intellect, :constitution, 
-	:wisdom, :charisma, :inventory, :skills, :armor_head, :armor_neck, :armor_body, :armor_arms, :armor_hands, 
-	:armor_legs, :armor_feet, :weapon
+	:wisdom, :charisma, :inventory, :skills
+
+	attr_writer :weapon, :armor_head, :armor_neck, :armor_body, :armor_arms, :armor_hands, 
+	:armor_legs, :armor_feet
 
 	def initialize(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma, skills=Skills.new)
 		super(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma)
@@ -44,113 +46,144 @@ class Player < NPC
 		@weapon = nil
 	end
 
+	def weapon(item = nil)
+		if item == nil
+			return @weapon
+		elsif item.is_a?(Weapon)
+			@weapon = item
+		end
+	end
+
+	def armor_head(item = nil)
+		if item == nil
+			return @armor_head
+		elsif item.is_a?(Armor)
+			@armor_head = item
+		end
+	end
+
+	def armor_neck(item = nil)
+		if item == nil
+			return @armor_neck
+		elsif item.is_a?(Armor)
+			@armor_neck = item
+		end
+	end
+
+	def armor_body(item = nil)
+		if item == nil
+			return @armor_body
+		elsif item.is_a?(Armor)
+			@armor_body = item
+		end
+	end
+
+	def armor_arms(item = nil)
+		if item == nil
+			return @armor_arms
+		elsif item.is_a?(Armor)
+			@armor_arms = item
+		end
+	end
+
+	def armor_hands(item = nil)
+		if item == nil
+			return @armor_hands
+		elsif item.is_a?(Armor)
+			@armor_hands = item
+		end
+	end
+
+	def armor_legs(item = nil)
+		if item == nil
+			return @armor_legs
+		elsif item.is_a?(Armor)
+			@armor_legs = item
+		end
+	end
+
+	def armor_feet(item = nil)
+		if item == nil
+			return @armor_feet
+		elsif item.is_a?(Armor)
+			@armor_feet = item
+		end
+	end
+
+	def equip_to_empty(item, item_slot)
+		puts("Equipping #{item}.")
+		self.send(item_slot, @inventory.get_item(item))
+		@inventory.remove_item(item)
+	end
+
+	def equip_and_replace(item, item_slot)
+		temp_item = self.send(item_slot)
+		puts("Unequipping #{temp_item.name}.")
+		@inventory.add_item(temp_item)
+		puts("Equipping #{item}.")
+		self.send(item_slot, @inventory.get_item(item))
+		@inventory.remove_item(item)
+	end
+
 	def equip(item)
 		if @inventory.get_item(item) == nil
 			puts("item not found")
 		else
 			if @inventory.get_item(item).is_a?(Weapon)
 				if @weapon == nil
-					puts("Equipping #{item}.")
-					@weapon = @inventory.get_item(item)
-					@inventory.remove_item(item)
+					equip_to_empty(item, "weapon")
 				else
-					puts("Unequipping #{@weapon.name}.")
-					@inventory.add_item(@weapon.name, @weapon)
-					puts("Equipping #{item}.")
-					@weapon = @inventory.get_item(item)
-					@inventory.remove_item(item)
+					equip_and_replace(item, "weapon")
 				end
 
 			elsif @inventory.get_item(item).is_a?(Armor)
-				if @inventory.get_item(item).slot == 'head'
+				if @inventory.get_item(item).slot == 'armor_head'
 					if @armor_head == nil
-						puts("Equipping #{item}.")
-						@armor_head = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_to_empty(item, item.slot)
 					else
-						puts("Unequipping #{@armor_head.name}.")
-						@inventory.add_item(@armor_head.name, @armor_head)
-						puts("Equipping #{item}.")
-						@armor_head = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_and_replace(item, item.slot)
 					end
 
-				elsif @inventory.get_item(item).slot == 'neck'
+				elsif @inventory.get_item(item).slot == 'armor_neck'
 					if @armor_neck == nil
-						puts("Equipping #{item}.")
-						@armor_neck = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_to_empty(item, item.slot)
 					else
-						puts("Unequipping #{@armor_neck.name}.")
-						@inventory.add_item(@armor_neck.name, @armor_neck)
-						puts("Equipping #{item}.")
-						@armor_neck = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_and_replace(item, item.slot)
 					end
 
-				elsif @inventory.get_item(item).slot == 'body'
+				elsif @inventory.get_item(item).slot == 'armor_body'
 					if @armor_body == nil
-						puts("Equipping #{item}.")
-						@armor_body = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_to_empty(item, item.slot)
 					else
-						puts("Unequipping #{@armor_body.name}.")
-						@inventory.add_item(@armor_body.name, @armor_body)
-						puts("Equipping #{item}.")
-						@armor_body = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_and_replace(item, item.slot)
 					end
 
-				elsif @inventory.get_item(item).slot == 'arms'
+				elsif @inventory.get_item(item).slot == 'armor_arms'
 					if @armor_arms == nil
-						puts("Equipping #{item}.")
-						@armor_arms = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_to_empty(item, item.slot)
 					else
-						puts("Unequipping #{@armor_arms.name}.")
-						@inventory.add_item(@armor_arms.name, @armor_arms)
-						puts("Equipping #{item}.")
-						@armor_arms = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_and_replace(item, item.slot)
 					end
 
-				elsif @inventory.get_item(item).slot == 'hands'
+				elsif @inventory.get_item(item).slot == 'armor_hands'
 					if @armor_hands == nil
-						puts("Equipping #{item}.")
-						@armor_hands = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_to_empty(item, item.slot)
 					else
-						puts("Unequipping #{@armor_hands.name}.")
-						@inventory.add_item(@armor_hands.name, @armor_hands)
-						puts("Equipping #{item}.")
-						@armor_hands = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_and_replace(item, item.slot)
 					end
 
-				elsif @inventory.get_item(item).slot == 'legs'
+				elsif @inventory.get_item(item).slot == 'armor_legs'
 					if @armor_legs == nil
-						puts("Equipping #{item}.")
-						@armor_legs = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_to_empty(item, item.slot)
 					else
-						puts("Unequipping #{@armor_legs.name}.")
-						@inventory.add_item(@armor_legs.name, @armor_legs)
-						puts("Equipping #{item}.")
-						@armor_legs = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_and_replace(item, item.slot)
 					end
 
-				elsif @inventory.get_item(item).slot == 'feet'
+				elsif @inventory.get_item(item).slot == 'armor_feet'
 					if @armor_feet == nil
-						puts("Equipping #{item}.")
-						@armor_feet = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_to_empty(item, item.slot)
 					else
-						puts("Unequipping #{@armor_feet.name}.")
-						@inventory.add_item(@armor_feet.name, @armor_feet)
-						puts("Equipping #{item}.")
-						@armor_feet = @inventory.get_item(item)
-						@inventory.remove_item(item)
+						equip_and_replace(item, item.slot)
 					end
 
 				else
@@ -203,12 +236,13 @@ class Item
 end
 
 class Weapon < Item
-	attr_accessor :item_level, :name, :rarity, :weapon_damage, :weapon_speed
+	attr_accessor :item_level, :name, :rarity, :weapon_damage, :weapon_speed, :skill_required
 
-	def initialize(item_level, name, rarity=:normal, weapon_damage, weapon_speed)
+	def initialize(item_level, name, rarity=:normal, weapon_damage, weapon_speed, skill_required)
 		super(item_level, name, rarity)
 		@weapon_damage = weapon_damage
 		@weapon_speed = weapon_speed
+		@skill_required = skill_required
 		@bonus_health = 0
 		@bonus_mana = 0
 
@@ -236,23 +270,49 @@ class Armor < Item
 	end
 end
 
+# using a hash is causing problems when adding multiple instances of the same item into the player's inventory.
+# the most recently added item will overwrite the current item if they have the same name
 class Inventory
 	attr_accessor :inventory
 
 	def initialize
-		@inventory = {}
+		@inventory = []
 	end
 
-	def get_item(name)
-		@inventory[name]
+	def get_item(item_requested)
+		if item_requested.is_a?(String)
+			@inventory.each do |item|
+				if item.name == item_requested
+					return item
+				end
+			end
+		elsif item_requested.is_a?(Integer)
+			return @inventory[(item_requested - 1)]
+		else
+			# command not recognized
+		end
+
 	end
 
-	def add_item(name, item)
-		@inventory[name] = item
+	def add_item(item)
+		@inventory << item
 	end
 
-	def remove_item(name)
-		@inventory.delete(name)
+	def remove_item(item_requested)
+		if item_requested.is_a?(String)
+			@inventory.each do |item|
+				if item.name == item_requested
+					@inventory.delete(item)
+					return
+				end
+			end
+
+		elsif item_requested.is_a?(Integer)
+			@inventory.delete_at(item_requested - 1)
+			return
+		else
+			# command not recognized
+		end
 	end
 
 	def to_s
@@ -334,37 +394,10 @@ class GameMap
 	end
 
 	def is_valid_move(direction)
-		if direction == "n"
-			if @player_row == 0
-				return false
-			else
-				return true
-			end
-
-		elsif direction == "s"
-			if @player_row == @game_map.size
-				return false
-			else
-				return true
-			end
-
-		elsif direction == "e"
-			if @player_col == @game_map.size
-				return false
-			else
-				return true
-			end
-
-		elsif direction == "w"
-			if @player_col == 0
-				return false
-			else
-				return true
-			end
-
-		else
-			# do nothing
-		end
+	  (direction == "n" && @player_row >= 0) ||
+	  (direction == "s" && @player_row <= @game_map.size) ||
+	  (direction == "e" && @player_col <= @game_map.size) ||
+	  (direction == "w" && @player_col >= 0)
 	end	
 end
 
@@ -445,8 +478,8 @@ class Game
 	def initialize
 		@game_map = GameMap.new
 		@state = 'pregame'
-		# init_weapons
-		# init_armor
+		init_weapons
+		init_armor
 
 		# create and configure root GUI window
 		@root = TkRoot.new
@@ -505,21 +538,27 @@ class Game
 		execute_player_command(self)
 	end
 
+	@skills = {"Piercing" => 0.0, "Slashing" => 0.0, "Mace Fighting" => 0.0, "Hand-to-Hand" => 0.0, "Mining" => 0.0,
+		 "Lumberjacking" => 0.0, "Hunting" => 0.0, "Foraging" => 0.0}
+
 	def init_weapons
 		@weapons = []
-		@weapons.push(Weapon.new(1, "Longsword", 10, 30))
-		@weapons.push(Weapon.new(1, "Broadsword", 12, 20))
-		@weapons.push(Weapon.new(1, "Dagger", 6, 60))
-		@weapons.push(Weapon.new(1, "Mace", 14, 15))
-		@weapons.push(Weapon.new(1, "Axe", 16, 12))
+		@weapons.push(Weapon.new(1, "Longsword", 10, 30, "Slashing"))
+		@weapons.push(Weapon.new(1, "Broadsword", 12, 20, "Slashing"))
+		@weapons.push(Weapon.new(1, "Dagger", 6, 60, "Piercing"))
+		@weapons.push(Weapon.new(1, "Mace", 14, 15, "Mace Fighting"))
+		@weapons.push(Weapon.new(1, "Axe", 16, 12, "Slashing"))
 	end
 
 	def init_armor
 		@armor = []
-		@armor.push(Armor.new(1, "Leather Tunic", 4))
-		@armor.push(Armor.new(1, "Leather Leggings", 4))
-		@armor.push(Armor.new(1, "Leather Cap", 2))
-		@armor.push(Armor.new(1, "Leather Gloves", 2))
+		@armor.push(Armor.new(1, "Leather Cap", "normal", 2, "armor_head"))
+		@armor.push(Armor.new(1, "Leather Gorget", "normal", 2, "armor_neck"))
+		@armor.push(Armor.new(1, "Leather Tunic", "normal", 4, "armor_body"))
+		@armor.push(Armor.new(1, "Leather Sleeves", "normal", 2, "armor_arms"))
+		@armor.push(Armor.new(1, "Leather Gloves", "normal", 2, "armor_hands"))
+		@armor.push(Armor.new(1, "Leather Leggings", "normal", 4, "armor_legs"))
+		@armor.push(Armor.new(1, "Leather Boots", "normal", 2, "armor_feet"))	
 	end
 
 	# 1) enables the text widget to be edited
@@ -592,13 +631,10 @@ class Game
 		insert_text("You entered: two")
 	end
 
-	# test method
 	def help
-		# do stuff
-	end
-
-	def help
-		# list commands here
+		dagger = Weapon.new(1, 'Dagger', 10, 10, 'Piercing')
+		@player.weapon(dagger)
+		insert_text("Your weapon: #{@player.weapon}")
 	end
 
 	# test method
