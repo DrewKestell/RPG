@@ -8,9 +8,11 @@ require 'tk'
 require 'tkextlib/tile'
 
 class NPC
-	attr_accessor :level, :name, :health, :mana, :strength, :dexterity, :agility, :intellect, :constitution, :wisdom, :charisma, :inventory
+	attr_accessor :level, :name, :health, :mana, :strength, :dexterity, :agility, :intellect, :constitution, :wisdom, 
+	:charisma, :inventory, :gold
 
-	def initialize(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma)
+	def initialize(level=1, name="NPC", health=100, mana=100, strength=10, dexterity=10, agility=10, 
+		intellect=10, constitution=10, wisdom=10, charisma=10, inventory=Inventory.new, gold=0)
 		@level = level
 		@name = name
 		@health = health
@@ -22,19 +24,21 @@ class NPC
 		@constitution = constitution
 		@wisdom = wisdom
 		@charisma = charisma
-		@inventory = Inventory.new
+		@inventory = inventory
+		@gold = gold
 	end
 end
 
 class Player < NPC
-	attr_accessor :level, :name, :health, :mana, :strength, :dexterity, :agility, :intellect, :constitution, 
-	:wisdom, :charisma, :inventory, :skills
+	attr_accessor :skills
 
 	attr_writer :weapon, :armor_head, :armor_neck, :armor_body, :armor_arms, :armor_hands, 
 	:armor_legs, :armor_feet
 
-	def initialize(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma, skills=Skills.new)
-		super(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma)
+	def initialize(level=1, name="Player", health=100, mana=100, strength=10, dexterity=10, agility=10, 
+			intellect=10, constitution=10, wisdom=10, charisma=10, inventory=Inventory.new, gold=0, skills=Skills.new)
+		super(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma, 
+			inventory, gold)
 		@skills = skills
 		@armor_head = nil
 		@armor_neck = nil
@@ -128,70 +132,18 @@ class Player < NPC
 	def equip(item)
 		if @inventory.get_item(item) == nil
 			puts("item not found")
-		else
-			if @inventory.get_item(item).is_a?(Weapon)
-				if @weapon == nil
-					equip_to_empty(item, "weapon")
-				else
-					equip_and_replace(item, "weapon")
-				end
 
-			elsif @inventory.get_item(item).is_a?(Armor)
-				if @inventory.get_item(item).slot == 'armor_head'
-					if @armor_head == nil
-						equip_to_empty(item, item.slot)
-					else
-						equip_and_replace(item, item.slot)
-					end
+		elsif @inventory.get_item(item).is_a?(Weapon) || @inventory.get_item(item).is_a?(Armor)
+			type = @inventory.get_item(item).slot
 
-				elsif @inventory.get_item(item).slot == 'armor_neck'
-					if @armor_neck == nil
-						equip_to_empty(item, item.slot)
-					else
-						equip_and_replace(item, item.slot)
-					end
-
-				elsif @inventory.get_item(item).slot == 'armor_body'
-					if @armor_body == nil
-						equip_to_empty(item, item.slot)
-					else
-						equip_and_replace(item, item.slot)
-					end
-
-				elsif @inventory.get_item(item).slot == 'armor_arms'
-					if @armor_arms == nil
-						equip_to_empty(item, item.slot)
-					else
-						equip_and_replace(item, item.slot)
-					end
-
-				elsif @inventory.get_item(item).slot == 'armor_hands'
-					if @armor_hands == nil
-						equip_to_empty(item, item.slot)
-					else
-						equip_and_replace(item, item.slot)
-					end
-
-				elsif @inventory.get_item(item).slot == 'armor_legs'
-					if @armor_legs == nil
-						equip_to_empty(item, item.slot)
-					else
-						equip_and_replace(item, item.slot)
-					end
-
-				elsif @inventory.get_item(item).slot == 'armor_feet'
-					if @armor_feet == nil
-						equip_to_empty(item, item.slot)
-					else
-						equip_and_replace(item, item.slot)
-					end
-
-				else
-					# do nothing
-				end
+			if self.send(type) == nil
+				equip_to_empty(item, type)
 			else
-				# do nothing
+				equip_and_replace(item, type)
 			end
+
+		else
+			puts "that item cannot be equipped"
 		end
 	end
 
@@ -218,55 +170,41 @@ class Player < NPC
 end
 
 class Monster < NPC
-	attr_accessor :level, :name, :health, :mana, :strength, :dexterity, :agility, :intellect, :constitution, :wisdom, :charisma, :inventory
-
-	def initialize(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma)
-		super(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma)
+	def initialize(level=1, name="Monster", health=100, mana=100, strength=10, dexterity=10, agility=10, 
+			intellect=10, constitution=10, wisdom=10, charisma=10, inventory=Inventory.new, gold=0)
+		super(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma, 
+			inventory, gold)
 	end
 end
 
 class Item
-	attr_accessor :item_level, :name, :rarity
+	attr_accessor :item_level, :name, :rarity, :slot
 
-	def initialize(item_level, name, rarity=:normal)
+	def initialize(item_level=1, name='Item', rarity=:normal, slot="none")
 		@item_level = item_level
 		@name = name
 		@rarity = rarity
+		@slot = slot
 	end
 end
 
 class Weapon < Item
-	attr_accessor :item_level, :name, :rarity, :weapon_damage, :weapon_speed, :skill_required
+	attr_accessor :weapon_damage, :weapon_speed, :skill_required
 
-	def initialize(item_level, name, rarity=:normal, weapon_damage, weapon_speed, skill_required)
-		super(item_level, name, rarity)
+	def initialize(item_level=1, name='Weapon', rarity=:normal, slot="weapon", weapon_damage=10, weapon_speed=10, skill_required=nil)
+		super(item_level, name, rarity, slot)
 		@weapon_damage = weapon_damage
 		@weapon_speed = weapon_speed
 		@skill_required = skill_required
-		@bonus_health = 0
-		@bonus_mana = 0
-
-		if rarity == :magical
-			@bonus_health = 10
-			@bonus_mana = 10
-		end
 	end
 end
 
 class Armor < Item
-	attr_accessor :item_level, :name, :rarity, :armor_value, :slot
+	attr_accessor :armor_value
 
-	def initialize(item_level, name, rarity=:normal, armor_value, slot)
-		super(item_level, name, rarity)
+	def initialize(item_level=1, name="Armor", rarity=:normal, slot="armor_body", armor_value=10)
+		super(item_level, name, rarity, slot)
 		@armor_value = armor_value
-		@slot = slot
-		@bonus_health = 0
-		@bonus_mana = 0
-
-		if rarity == :magical
-			@bonus_health = 10
-			@bonus_mana = 10
-		end
 	end
 end
 
