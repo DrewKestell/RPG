@@ -36,7 +36,7 @@ class Player < NPC
 	:armor_legs, :armor_feet
 
 	def initialize(level=1, name="Player", health=100, mana=100, strength=10, dexterity=10, agility=10, 
-			intellect=10, constitution=10, wisdom=10, charisma=10, inventory=Inventory.new, gold=0, skills=Skills.new)
+		intellect=10, constitution=10, wisdom=10, charisma=10, inventory=Inventory.new, gold=0, skills=Skills.new)
 		super(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma, 
 			inventory, gold)
 		@skills = skills
@@ -115,9 +115,11 @@ class Player < NPC
 	end
 
 	def equip_to_empty(item, item_slot)
-		puts("Equipping #{item}.")
+		puts("Equipping #{item}.") if item.is_a?(String)
+		puts("Equipping #{@inventory.get_item(item).name}.") if item.is_a?(Integer)
+
 		self.send(item_slot, @inventory.get_item(item))
-		@inventory.remove_item(item)
+		@inventory.remove_item(@inventory.inventory.index(@inventory.get_item(item)))
 	end
 
 	def equip_and_replace(item, item_slot)
@@ -126,7 +128,7 @@ class Player < NPC
 		@inventory.add_item(temp_item)
 		puts("Equipping #{item}.")
 		self.send(item_slot, @inventory.get_item(item))
-		@inventory.remove_item(item)
+		@inventory.remove_item(@inventory.inventory.index(@inventory.get_item(item)))
 	end
 
 	def equip(item)
@@ -143,7 +145,7 @@ class Player < NPC
 			end
 
 		else
-			puts "that item cannot be equipped"
+			puts "That item cannot be equipped."
 		end
 	end
 
@@ -180,31 +182,58 @@ end
 class Item
 	attr_accessor :item_level, :name, :rarity, :slot
 
-	def initialize(item_level=1, name='Item', rarity=:normal, slot="none")
+	def initialize(item_level, name, rarity, slot)
 		@item_level = item_level
 		@name = name
 		@rarity = rarity
 		@slot = slot
+	end
+
+	def to_s
+		"Item level: #{@item_level}\n" + 
+		"Item name: #{@name}\n" + 
+		"Rarity: #{@rarity}\n" + 
+		"Equip slot: not equippable\n"
 	end
 end
 
 class Weapon < Item
 	attr_accessor :weapon_damage, :weapon_speed, :skill_required
 
-	def initialize(item_level=1, name='Weapon', rarity=:normal, slot="weapon", weapon_damage=10, weapon_speed=10, skill_required=nil)
+	def initialize(item_level, name, rarity, slot, weapon_damage, weapon_speed, skill_required)
 		super(item_level, name, rarity, slot)
 		@weapon_damage = weapon_damage
 		@weapon_speed = weapon_speed
 		@skill_required = skill_required
+	end
+
+	def to_s
+		"Item type: Weapon\n" + 
+		"Item level: #{@item_level}\n" + 
+		"Item name: #{@name}\n" + 
+		"Rarity: #{@rarity}\n" + 
+		"Equip slot: weapon\n" + 
+		"Damage: #{@weapon_damage}\n" + 
+		"Speed: #{@weapon_speed}\n" + 
+		"Skill required: #{@skill_required}\n"
 	end
 end
 
 class Armor < Item
 	attr_accessor :armor_value
 
-	def initialize(item_level=1, name="Armor", rarity=:normal, slot="armor_body", armor_value=10)
+	def initialize(item_level, name, rarity, slot, armor_value)
 		super(item_level, name, rarity, slot)
 		@armor_value = armor_value
+	end
+
+	def to_s
+		"Item type: Armor\n" + 
+		"Item level: #{@item_level}\n" + 
+		"Item name: #{@name}\n" + 
+		"Rarity: #{@rarity}\n" + 
+		"Equip slot: #{@slot}\n" + 
+		"Armor value: #{@armor_value}\n"
 	end
 end
 
@@ -219,13 +248,9 @@ class Inventory
 
 	def get_item(item_requested)
 		if item_requested.is_a?(String)
-			@inventory.each do |item|
-				if item.name == item_requested
-					return item
-				end
-			end
+			return @inventory.bsearch {|item| item.name.casecmp(item_requested)}
 		elsif item_requested.is_a?(Integer)
-			return @inventory[(item_requested - 1)]
+			return @inventory.fetch(item_requested - 1)
 		else
 			# command not recognized
 		end
@@ -233,24 +258,11 @@ class Inventory
 	end
 
 	def add_item(item)
-		@inventory << item
+		@inventory.push(item)
 	end
 
 	def remove_item(item_requested)
-		if item_requested.is_a?(String)
-			@inventory.each do |item|
-				if item.name == item_requested
-					@inventory.delete(item)
-					return
-				end
-			end
-
-		elsif item_requested.is_a?(Integer)
-			@inventory.delete_at(item_requested - 1)
-			return
-		else
-			# command not recognized
-		end
+		@inventory.delete_at(item_requested - 1)
 	end
 
 	def to_s
@@ -304,12 +316,12 @@ class Tile
 	end	
 
 	def to_s
-		puts "Tile type: #{type}"
-		puts "Danger level: #{danger_level}"
-		puts "Wood available: #{wood}"
-		puts "Metal available: #{metal}"
-		puts "Animals available: #{animals}"
-		puts "Foraging available: #{foraging}"
+		"Environment type: #{type}\n" + 
+		"Danger level: #{danger_level}\n" + 
+		"Wood available: #{wood}\n" + 
+		"Metal available: #{metal}\n" + 
+		"Animals available: #{animals}\n" + 
+		"Foraging available: #{foraging}\n"
 	end
 end
 
@@ -317,25 +329,29 @@ class GameMap
 	attr_accessor :game_map, :tile_set, :player_col, :player_row
 
 	def initialize
-		@game_map = Array.new(5) { Array.new(5, 0) }	
+		@game_map = Array.new(10) { Array.new(10, 0) }	
 		@tile_set = [:Prairie, :Swamp, :Desert, :Mountain, :Forest, :Jungle]
-		@player_row = 3
-		@player_col = 3	
+		@player_row = 0
+		@player_col = 0
 	end
 
 	def fill_game_map
-		(0..4).each do |i|
-			(0..4).each do |j|
+		(0..9).each do |i|
+			(0..9).each do |j|
 				@game_map[i][j] = Tile.new(@tile_set[rand(5)])
 			end
 		end
 	end
 
+	def get_tile_info
+		return @game_map.at(player_col).at(player_row).to_s
+	end
+
 	def is_valid_move(direction)
-	  (direction == "n" && @player_row >= 0) ||
-	  (direction == "s" && @player_row <= @game_map.size) ||
-	  (direction == "e" && @player_col <= @game_map.size) ||
-	  (direction == "w" && @player_col >= 0)
+	  (direction == "n" && @player_row > 0) ||
+	  (direction == "s" && @player_row < (@game_map.size - 1)) ||
+	  (direction == "e" && @player_col < (@game_map.size - 1)) ||
+	  (direction == "w" && @player_col > 0)
 	end	
 end
 
@@ -415,6 +431,7 @@ class Game
 
 	def initialize
 		@game_map = GameMap.new
+		@game_map.fill_game_map
 		@state = 'pregame'
 		init_weapons
 		init_armor
@@ -435,6 +452,12 @@ class Game
 		@text_two = Tk::Tile::Entry.new(@content) {width 80; textvariable @enter_button_var}
 		@enter_button = Tk::Tile::Button.new(@content) {text 'Enter'; command 'execute_player_command'}
 		@right_frame = Tk::Tile::Frame.new(@content) {relief "sunken"; width 300; height 700}
+		@map_label = Tk::Tile::Label.new(@left_frame) { text 'Game Map'; compound 'bottom' }
+		@map_image = TkPhotoImage.new(:file => "map270.gif")
+		@map_label['image'] = @map_image
+		@x_label = Tk::Tile::Label.new(@left_frame)
+		@x_image = TkPhotoImage.new(:file => "x.gif")
+		@x_label['image'] = @x_image
 
 		# more configuration
 		@text_two.focus
@@ -449,6 +472,8 @@ class Game
 		@enter_button.grid :column => 2, :row => 1, :sticky => 'ew'
 		@scroll.grid :column => 3, :row => 0, :sticky => 'ns'
 		@right_frame.grid :column => 4, :row => 0, :sticky => 'nsew', :rowspan => 2
+		@map_label.grid :column => 0, :row => 0, :sticky => 'nsew', :padx => 13, :pady => 5
+		@x_label.grid :column => 0, :row => 0, :sticky => 'nw', :padx => 22, :pady => 33
 
 		# configure resizing behavior
 		TkGrid.propagate(@left_frame, false)
@@ -459,7 +484,7 @@ class Game
 		TkGrid.columnconfigure(@content, 2, :weight => 0)
 		TkGrid.columnconfigure(@content, 3, :weight => 0)
 		TkGrid.rowconfigure(@content, 0, :weight => 1)
-		TkGrid.rowconfigure(@content, 1, :weight => 1)
+		TkGrid.rowconfigure(@content, 1, :weight => 0)
 
 		# bindings
 		@text_two.bind("KeyPress-Return") {execute_player_command}
@@ -468,24 +493,17 @@ class Game
 		Tk.mainloop
 	end
 
-	def create_player(name)
-		@player = Player.new(1, name, 100, 100, 10, 10, 10, 10, 10, 10, 10)
-	end
-
 	def execute_player_command
 		execute_player_command(self)
 	end
 
-	@skills = {"Piercing" => 0.0, "Slashing" => 0.0, "Mace Fighting" => 0.0, "Hand-to-Hand" => 0.0, "Mining" => 0.0,
-		 "Lumberjacking" => 0.0, "Hunting" => 0.0, "Foraging" => 0.0}
-
 	def init_weapons
 		@weapons = []
-		@weapons.push(Weapon.new(1, "Longsword", 10, 30, "Slashing"))
-		@weapons.push(Weapon.new(1, "Broadsword", 12, 20, "Slashing"))
-		@weapons.push(Weapon.new(1, "Dagger", 6, 60, "Piercing"))
-		@weapons.push(Weapon.new(1, "Mace", 14, 15, "Mace Fighting"))
-		@weapons.push(Weapon.new(1, "Axe", 16, 12, "Slashing"))
+		@weapons.push(Weapon.new(1, "Longsword", 'normal', 'weapon', 10, 30, "Slashing"))
+		@weapons.push(Weapon.new(1, "Broadsword", 'normal', 'weapon', 12, 20, "Slashing"))
+		@weapons.push(Weapon.new(1, "Dagger", 'normal', 'weapon', 6, 60, "Piercing"))
+		@weapons.push(Weapon.new(1, "Mace", 'normal', 'weapon', 14, 15, "Mace Fighting"))
+		@weapons.push(Weapon.new(1, "Axe", 'normal', 'weapon', 16, 12, "Slashing"))
 	end
 
 	def init_armor
@@ -497,6 +515,12 @@ class Game
 		@armor.push(Armor.new(1, "Leather Gloves", "normal", 2, "armor_hands"))
 		@armor.push(Armor.new(1, "Leather Leggings", "normal", 4, "armor_legs"))
 		@armor.push(Armor.new(1, "Leather Boots", "normal", 2, "armor_feet"))	
+	end
+
+	def adjust_map(next_col, next_row)
+		x_loc = 22 + (next_col * 27)
+		y_loc = 33 + (next_row * 27)
+		@x_label.grid :column => 0, :row => 0, :sticky => 'nw', :padx => x_loc, :pady => y_loc
 	end
 
 	# 1) enables the text widget to be edited
@@ -521,15 +545,39 @@ class Game
 		elsif state == 'normal'
 			if text_two.get == 'fight'
 				fight
-			elsif text_two.get == 'equip'
-				insert_text("You must specify the name of the item you want to equip. and the item must be in your inventory.")
-				insert_text("For example, you could type 'equip Longsword'.")
-				insert_text("To see all equippable items you currently posess, type 'show equippables'.")
-			elsif /equip [a-zA-Z]+(\s|[a-zA-Z])*$/ === text_two.get
+			elsif /equip ([a-zA-Z])+(\s|[a-zA-Z])*$/ === text_two.get
 				array = text_two.get.split(' ')
 				array.shift
 				string = array.join(' ')
 				@player.equip(string)
+			elsif /equip (\d)+$/ === text_two.get
+				array = text_two.get.split(' ')
+				array.shift
+				integer = array.join(' ').to_i
+				@player.equip(integer)
+			elsif text_two.get == 'move e' || 
+				text_two.get == 'move w' ||
+				text_two.get == 'move s' ||
+				text_two.get == 'move n'
+
+				array = text_two.get.split(' ')
+				array.shift
+				direction = array.join(' ')
+				move(direction)
+			elsif text_two.get == 'survey'
+				survey
+			elsif text_two.get == 'map'
+				print_map
+			elsif text_two.get == 'show equippables'
+				show_equippables
+			elsif text_two.get == 'show inventory'
+				show_inventory
+			elsif text_two.get == 'equip'
+				insert_text("You must specify the item you want to equip. and the item must be in your inventory.")
+				insert_text("You can either use the name of the item, or the slot in your inventory where item is stored.")
+				insert_text("For example, you could type 'equip Longsword'.")
+				insert_text("Or, if the item is in inventory slot 1, you could type 'equip 1'.")
+				insert_text("To see all equippable items you currently posess, type 'show equippables'.")	
 			elsif text_two.get == 'start'
 				insert_text("Game already started.")
 			elsif text_two.get == ''
@@ -541,14 +589,14 @@ class Game
 			elsif text_two.get == 'help'
 				help
 			else
-				insert_text("Unknown command.")
+				insert_text("Unknown command.\n")
 			end
 
 		elsif state == 'combat'
 			if text_two.get == 'attack'
 				@encounter.attack_monster
 			elsif text_two.get == 'status'
-				puts "Player in game object health: #{player.health}"			
+				# print player status		
 			else
 				# do stuff
 			end
@@ -559,20 +607,38 @@ class Game
 	  text_two.delete(0, 'end')
 	end
 
+	def survey
+		insert_text(@game_map.get_tile_info)
+	end
+
 	def fight
 		@encounter = MonsterEncounter.new(self)
 		insert_text("You are attacked by a Goblin!  Prepare to defend yourself!")
 		@state = 'combat'
 	end
 
-	def input_box_2
-		insert_text("You entered: two")
+	def show_equippables
+		insert_text("The following items in your inventory are equippable:\n")
+
+		@player.inventory.inventory.each_with_index do |item, i|
+			if item.is_a?(Weapon) || item.is_a?(Armor)
+				insert_text("Inventory slot #{i + 1}")
+				insert_text(item)		
+			end
+		end
+	end
+
+	def show_inventory
+		insert_text("Your inventory contains the following items:\n")
+
+		@player.inventory.inventory.each_with_index do |item, i|
+			insert_text("Inventory slot #{i + 1}")
+			insert_text(item.to_s)
+		end
 	end
 
 	def help
-		dagger = Weapon.new(1, 'Dagger', 10, 10, 'Piercing')
-		@player.weapon(dagger)
-		insert_text("Your weapon: #{@player.weapon}")
+
 	end
 
 	# test method
@@ -584,9 +650,9 @@ class Game
 			text.state('normal')
 			text.insert('end', "Testing...\n")
 			text.see('end')
-		  text.state('disabled')
+		  	text.state('disabled')
 	 		i += 1
-	  	Tk.sleep(50)
+	  		Tk.sleep(50)
 		end
 	end
 
@@ -594,6 +660,7 @@ class Game
 		if direction == "n"
 			if game_map.is_valid_move("n") == true
 				game_map.player_row -= 1
+				adjust_map(game_map.player_col, game_map.player_row)
 			else
 				puts "That is not a valid move"
 			end
@@ -601,6 +668,7 @@ class Game
 		elsif direction == "s"
 			if game_map.is_valid_move("s") == true
 				game_map.player_row += 1
+				adjust_map(game_map.player_col, game_map.player_row)
 			else
 				puts "That is not a valid move"
 			end
@@ -608,6 +676,7 @@ class Game
 		elsif direction == "e"
 			if game_map.is_valid_move("e") == true
 				game_map.player_col += 1
+				adjust_map(game_map.player_col, game_map.player_row)
 			else
 				puts "That is not a valid move"
 			end
@@ -615,6 +684,7 @@ class Game
 		elsif direction == "w"
 			if game_map.is_valid_move("w") == true
 				game_map.player_col -= 1
+				adjust_map(game_map.player_col, game_map.player_row)
 			else
 				puts "That is not a valid move"
 			end
@@ -625,8 +695,8 @@ class Game
 	end
 
 	def print_map
-		(0..4).each do |i|
-			(0..4).each do |j|
+		(0..9).each do |i|
+			(0..9).each do |j|
 				if i == game_map.player_row && j == game_map.player_col
 					print "x"
 				else
@@ -638,7 +708,6 @@ class Game
 	end
 
 	def start
-
 		if player == nil
 			char_name_var = TkVariable.new
 
@@ -670,7 +739,9 @@ class Game
 		@player = Player.new(1, name, 100, 100, 10, 10, 10, 10, 10, 10, 10)
 		@create_character.destroy
 		insert_text("Welcome to Bloog's Quest, #{name}!")
-		insert_text("To see a list of commands, type 'help'.")
+		insert_text("To see a list of commands, type 'help'.\n")
+		dagger = Weapon.new(1, 'Dagger', 'normal', 'weapon', 10, 4, 'Piercing')
+		player.inventory.add_item(dagger)
 	end
 end
 
