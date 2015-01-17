@@ -114,12 +114,21 @@ class Player < NPC
 		end
 	end
 
+<<<<<<< HEAD
 	def equip_to_empty(item, item_slot, game)
 		game.insert_text("Equipping #{item}.\n") if item.is_a?(String)
 		game.insert_text("Equipping #{@inventory.get_item(item).name}.\n") if item.is_a?(Integer)
 		self.send(item_slot, @inventory.get_item(item))
 		@inventory.remove_item(item)
 		update_paperdoll(game)
+=======
+	def equip_to_empty(item, item_slot)
+		puts("Equipping #{item}.") if item.is_a?(String)
+		puts("Equipping #{@inventory.get_item(item).name}.") if item.is_a?(Integer)
+
+		self.send(item_slot, @inventory.get_item(item))
+		@inventory.remove_item(@inventory.inventory.index(@inventory.get_item(item)))
+>>>>>>> origin/master
 	end
 
 	def equip_and_replace(item, item_slot, game)
@@ -128,8 +137,12 @@ class Player < NPC
 		@inventory.add_item(temp_item)
 		game.insert_text("Equipping #{item}.\n")
 		self.send(item_slot, @inventory.get_item(item))
+<<<<<<< HEAD
 		@inventory.remove_item(item)
 		update_paperdoll(game)
+=======
+		@inventory.remove_item(@inventory.inventory.index(@inventory.get_item(item)))
+>>>>>>> origin/master
 	end
 
 	def grid_armor_helmet
@@ -297,7 +310,11 @@ class Player < NPC
 			end
 
 		else
+<<<<<<< HEAD
 			game.insert_text("That item cannot be equipped.\n")
+=======
+			puts "That item cannot be equipped."
+>>>>>>> origin/master
 		end
 	end
 
@@ -352,7 +369,11 @@ end
 class Weapon < Item
 	attr_accessor :weapon_damage, :weapon_speed, :skill_required
 
+<<<<<<< HEAD
 	def initialize(item_level, name, rarity, slot, weapon_damage, weapon_speed, skill_required, image_url)
+=======
+	def initialize(item_level, name, rarity, slot, weapon_damage, weapon_speed, skill_required)
+>>>>>>> origin/master
 		super(item_level, name, rarity, slot)
 		@weapon_damage = weapon_damage
 		@weapon_speed = weapon_speed
@@ -370,15 +391,39 @@ class Weapon < Item
 		"Speed: #{@weapon_speed}\n" + 
 		"Skill required: #{@skill_required}\n"
 	end
+
+	def to_s
+		"Item type: Weapon\n" + 
+		"Item level: #{@item_level}\n" + 
+		"Item name: #{@name}\n" + 
+		"Rarity: #{@rarity}\n" + 
+		"Equip slot: weapon\n" + 
+		"Damage: #{@weapon_damage}\n" + 
+		"Speed: #{@weapon_speed}\n" + 
+		"Skill required: #{@skill_required}\n"
+	end
 end
 
 class Armor < Item
 	attr_accessor :armor_value
 
+<<<<<<< HEAD
 	def initialize(item_level, name, rarity, slot, armor_value, image_url)
+=======
+	def initialize(item_level, name, rarity, slot, armor_value)
+>>>>>>> origin/master
 		super(item_level, name, rarity, slot)
 		@armor_value = armor_value
 		@image_url = image_url
+	end
+
+	def to_s
+		"Item type: Armor\n" + 
+		"Item level: #{@item_level}\n" + 
+		"Item name: #{@name}\n" + 
+		"Rarity: #{@rarity}\n" + 
+		"Equip slot: #{@slot}\n" + 
+		"Armor value: #{@armor_value}\n"
 	end
 
 	def to_s
@@ -402,10 +447,16 @@ class Inventory
 
 	def get_item(item_requested)
 		if item_requested.is_a?(String)
+<<<<<<< HEAD
 			return @inventory.find {|item| item.name.casecmp(item_requested) == 0}
 		elsif item_requested.is_a?(Integer)
 			index = item_requested - 1
 			return @inventory.fetch(index)
+=======
+			return @inventory.bsearch {|item| item.name.casecmp(item_requested)}
+		elsif item_requested.is_a?(Integer)
+			return @inventory.fetch(item_requested - 1)
+>>>>>>> origin/master
 		else
 			# command not recognized
 		end
@@ -417,6 +468,7 @@ class Inventory
 	end
 
 	def remove_item(item_requested)
+<<<<<<< HEAD
 		if item_requested.is_a?(String)
 			@inventory.delete_at(@inventory.find_index {|item| item.name.casecmp(item_requested) == 0})
 		elsif item_requested.is_a?(Integer)
@@ -425,6 +477,9 @@ class Inventory
 		else
 			# command not recognized
 		end
+=======
+		@inventory.delete_at(item_requested - 1)
+>>>>>>> origin/master
 	end
 
 	def to_s
@@ -620,6 +675,7 @@ class Game
 		@map_label = Tk::Tile::Label.new(@left_frame) { text 'Game Map'; compound 'bottom' }
 		@map_image = TkPhotoImage.new(:file => "map270.gif")
 		@map_label['image'] = @map_image
+<<<<<<< HEAD
 		@x_label = Tk::Tile::Label.new(@left_frame) { background 'white'; }
 		@x_image = TkPhotoImage.new(:file => "x.gif")
 		@x_label['image'] = @x_image
@@ -659,6 +715,11 @@ class Game
 		@longsword_label = Tk::Tile::Label.new(@left_frame)
 		@longsword_image = TkPhotoImage.new(:file => "art_assets/longsword.gif")
 		@longsword_label['image'] = @longsword_image
+=======
+		@x_label = Tk::Tile::Label.new(@left_frame)
+		@x_image = TkPhotoImage.new(:file => "x.gif")
+		@x_label['image'] = @x_image
+>>>>>>> origin/master
 
 		# more configuration
 		@text_two.focus
@@ -673,9 +734,14 @@ class Game
 		@enter_button.grid :column => 2, :row => 1, :sticky => 'ew'
 		@scroll.grid :column => 3, :row => 0, :sticky => 'ns'
 		@right_frame.grid :column => 4, :row => 0, :sticky => 'nsew', :rowspan => 2
+<<<<<<< HEAD
 		@map_label.grid :column => 0, :row => 0, :sticky => 'nw', :padx => 13, :pady => 5
 		@x_label.grid :column => 0, :row => 0, :rowspan => 2, :sticky => 'nw', :padx => 22, :pady => 33
 		@human_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 32, :pady => 10
+=======
+		@map_label.grid :column => 0, :row => 0, :sticky => 'nsew', :padx => 13, :pady => 5
+		@x_label.grid :column => 0, :row => 0, :sticky => 'nw', :padx => 22, :pady => 33
+>>>>>>> origin/master
 
 		# configure resizing behavior
 		TkGrid.propagate(@left_frame, false)
@@ -687,9 +753,12 @@ class Game
 		TkGrid.columnconfigure(@content, 3, :weight => 0)
 		TkGrid.rowconfigure(@content, 0, :weight => 1)
 		TkGrid.rowconfigure(@content, 1, :weight => 0)
+<<<<<<< HEAD
 		TkGrid.columnconfigure(@left_frame, 0, :weight => 0)
 		TkGrid.rowconfigure(@left_frame, 0, :weight => 0)
 		TkGrid.rowconfigure(@left_frame, 1, :weight => 0)
+=======
+>>>>>>> origin/master
 
 		# bindings
 		@text_two.bind("KeyPress-Return") {execute_player_command}
@@ -698,6 +767,7 @@ class Game
 		Tk.mainloop
 	end
 
+<<<<<<< HEAD
 	def grid_armor_helmet
 		@leatherhelmet_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 27
 	end
@@ -730,17 +800,27 @@ class Game
 		@longsword_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 54, :pady => 212
 	end
 
+=======
+>>>>>>> origin/master
 	def execute_player_command
 		execute_player_command(self)
 	end
 
 	def init_weapons
 		@weapons = []
+<<<<<<< HEAD
 		@weapons.push(Weapon.new(1, "Longsword", 'normal', 'weapon', 10, 30, "Slashing", "art_assets/longsword.gif"))
 		@weapons.push(Weapon.new(1, "Broadsword", 'normal', 'weapon', 12, 20, "Slashing", "art_assets/longsword.gif"))
 		@weapons.push(Weapon.new(1, "Dagger", 'normal', 'weapon', 6, 60, "Piercing", "art_assets/longsword.gif"))
 		@weapons.push(Weapon.new(1, "Mace", 'normal', 'weapon', 14, 15, "Mace Fighting", "art_assets/longsword.gif"))
 		@weapons.push(Weapon.new(1, "Axe", 'normal', 'weapon', 16, 12, "Slashing", "art_assets/longsword.gif"))
+=======
+		@weapons.push(Weapon.new(1, "Longsword", 'normal', 'weapon', 10, 30, "Slashing"))
+		@weapons.push(Weapon.new(1, "Broadsword", 'normal', 'weapon', 12, 20, "Slashing"))
+		@weapons.push(Weapon.new(1, "Dagger", 'normal', 'weapon', 6, 60, "Piercing"))
+		@weapons.push(Weapon.new(1, "Mace", 'normal', 'weapon', 14, 15, "Mace Fighting"))
+		@weapons.push(Weapon.new(1, "Axe", 'normal', 'weapon', 16, 12, "Slashing"))
+>>>>>>> origin/master
 	end
 
 	def init_armor
@@ -752,6 +832,12 @@ class Game
 		@armor.push(Armor.new(1, "Leather Gloves", "normal", "armor_hands", 2, "art_assets/leathergloves.gif"))
 		@armor.push(Armor.new(1, "Leather Leggings", "normal", "armor_legs", 4, "art_assets/leatherpants.gif"))
 		@armor.push(Armor.new(1, "Leather Boots", "normal", "armor_feet", 2, "art_assets/leatherboots.gif"))	
+	end
+
+	def adjust_map(next_col, next_row)
+		x_loc = 22 + (next_col * 27)
+		y_loc = 33 + (next_row * 27)
+		@x_label.grid :column => 0, :row => 0, :sticky => 'nw', :padx => x_loc, :pady => y_loc
 	end
 
 	def adjust_map(next_col, next_row)
@@ -786,12 +872,20 @@ class Game
 				array = text_two.get.split(' ')
 				array.shift
 				string = array.join(' ')
+<<<<<<< HEAD
 				@player.equip(string, self)
+=======
+				@player.equip(string)
+>>>>>>> origin/master
 			elsif /equip (\d)+$/ === text_two.get
 				array = text_two.get.split(' ')
 				array.shift
 				integer = array.join(' ').to_i
+<<<<<<< HEAD
 				@player.equip(integer, self)
+=======
+				@player.equip(integer)
+>>>>>>> origin/master
 			elsif text_two.get == 'move e' || 
 				text_two.get == 'move w' ||
 				text_two.get == 'move s' ||
@@ -801,12 +895,17 @@ class Game
 				array.shift
 				direction = array.join(' ')
 				move(direction)
+<<<<<<< HEAD
 			elsif text_two.get == 'equipment'
 				insert_text(@player.equipment_to_s)
 			elsif text_two.get == 'survey'
 				insert_text(@game_map.get_tile_info)
 			elsif text_two.get == 'gold'
 				insert_text("You have #{@player.gold} gold pieces.")
+=======
+			elsif text_two.get == 'survey'
+				survey
+>>>>>>> origin/master
 			elsif text_two.get == 'map'
 				print_map
 			elsif text_two.get == 'show equippables'
@@ -846,6 +945,10 @@ class Game
 		end
 
 	  text_two.delete(0, 'end')
+	end
+
+	def survey
+		insert_text(@game_map.get_tile_info)
 	end
 
 	def fight
@@ -977,6 +1080,7 @@ class Game
 		@create_character.destroy
 		insert_text("Welcome to Bloog's Quest, #{name}!")
 		insert_text("To see a list of commands, type 'help'.\n")
+<<<<<<< HEAD
 		player.inventory.add_item(@armor[0])
 		player.inventory.add_item(@armor[1])
 		player.inventory.add_item(@armor[2])
@@ -985,6 +1089,10 @@ class Game
 		player.inventory.add_item(@armor[5])
 		player.inventory.add_item(@armor[6])
 		player.inventory.add_item(@weapons[0])
+=======
+		dagger = Weapon.new(1, 'Dagger', 'normal', 'weapon', 10, 4, 'Piercing')
+		player.inventory.add_item(dagger)
+>>>>>>> origin/master
 	end
 end
 
