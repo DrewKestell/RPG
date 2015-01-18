@@ -1,9 +1,3 @@
-"""  ** I'm not sure if this is necessary **
-module TkCore 
-  RUN_EVENTLOOP_ON_MAIN_THREAD = true
-end
-"""
-
 require 'tk'
 require 'tkextlib/tile'
 
@@ -130,10 +124,6 @@ class Player < NPC
 		self.send(item_slot, @inventory.get_item(item))
 		@inventory.remove_item(item)
 		game.send("grid_#{item_slot}")
-	end
-
-	def execute_player_command
-		execute_player_command(self)
 	end
 
 	# this is currently not used, but could be useful if a player loaded a fresh character, and the game
@@ -536,6 +526,8 @@ class Game
 		# bindings
 		@text_two.bind("KeyPress-Return") {execute_player_command}
 		@text_two.bind("KeyPress-KP_Enter") {execute_player_command}
+
+		# more bindings - gets item info on left click
 		@head_label.bind("1") {get_item_info(@player.armor_head)}
 		@neck_label.bind("1") {get_item_info(@player.armor_neck)}
 		@body_label.bind("1") {get_item_info(@player.armor_body)}
@@ -544,6 +536,16 @@ class Game
 		@legs_label.bind("1") {get_item_info(@player.armor_legs)}
 		@feet_label.bind("1") {get_item_info(@player.armor_feet)}
 		@weapon_label.bind("1") {get_item_info(@player.weapon)}
+
+		# more bindings - unequip item on right click
+		@head_label.bind("3") {@player.unequip(@player.armor_head.name, self)}
+		@neck_label.bind("3") {@player.unequip(@player.armor_neck.name, self)}
+		@body_label.bind("3") {@player.unequip(@player.armor_body.name, self)}
+		@arms_label.bind("3") {@player.unequip(@player.armor_arms.name, self)}
+		@hands_label.bind("3") {@player.unequip(@player.armor_hands.name, self)}
+		@legs_label.bind("3") {@player.unequip(@player.armor_legs.name, self)}
+		@feet_label.bind("3") {@player.unequip(@player.armor_feet.name, self)}
+		@weapon_label.bind("3") {@player.unequip(@player.weapon.name, self)}
 
 		# grid GUI elements
 		@content.grid :column => 0, :row => 0, :sticky => 'nsew'
@@ -571,61 +573,72 @@ class Game
 		TkGrid.rowconfigure(@left_frame, 0, :weight => 0)
 		TkGrid.rowconfigure(@left_frame, 1, :weight => 0)
 
+		# start main GUI loop
 		Tk.mainloop
 	end
 
+	# hides the specified item label from the paperdoll when item is unequipped
 	def destroy_label(slot)
 		TkGrid.remove(instance_variable_get("@#{slot.gsub('armor_', '')}_label"))
 	end
 
+	# shows the item art when an item is equipped.  item art url is specified in the item object.
 	def grid_armor_head
 		@head_image['file'] = @player.armor_head.image_url
 		@head_label['image'] = @head_image
 		@head_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 27
 	end
 
+	# shows the item art when an item is equipped.  item art url is specified in the item object.
 	def grid_armor_neck
 		@neck_image['file'] = @player.armor_neck.image_url
 		@neck_label['image'] = @neck_image
 		@neck_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 201, :pady => 59
 	end
 
+	# shows the item art when an item is equipped.  item art url is specified in the item object.
 	def grid_armor_body
 		@body_image['file'] = @player.armor_body.image_url
 		@body_label['image'] = @body_image
 		@body_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 110
 	end
 	
+	# shows the item art when an item is equipped.  item art url is specified in the item object.
 	def grid_armor_arms
 		@arms_image['file'] = @player.armor_arms.image_url
 		@arms_label['image'] = @arms_image
 		@arms_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 74, :pady => 146
 	end
 
+	# shows the item art when an item is equipped.  item art url is specified in the item object.
 	def grid_armor_hands
 		@hands_image['file'] = @player.armor_hands.image_url
 		@hands_label['image'] = @hands_image
 		@hands_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 201, :pady => 146
 	end
 
+	# shows the item art when an item is equipped.  item art url is specified in the item object.
 	def grid_armor_legs
 		@legs_image['file'] = @player.armor_legs.image_url
 		@legs_label['image'] = @legs_image
 		@legs_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 133, :pady => 220
 	end
 
+	# shows the item art when an item is equipped.  item art url is specified in the item object.
 	def grid_armor_feet
 		@feet_image['file'] = @player.armor_feet.image_url
 		@feet_label['image'] = @feet_image
 		@feet_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 133, :pady => 296
 	end
 
+	# shows the item art when an item is equipped.  item art url is specified in the item object.
 	def grid_weapon
 		@weapon_image['file'] = @player.weapon.image_url
 		@weapon_label['image'] = @weapon_image
 		@weapon_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 54, :pady => 212
 	end
 
+	# reads weapons.txt to generate all game weapons
 	def init_weapons
 		@weapons = []
 		weapons_array = IO.readlines("weapons.txt")
@@ -636,6 +649,7 @@ class Game
 		end
 	end
 
+	# reads armor.txt to generate all game armor
 	def init_armor
 		@armor = []
 		armor_array = IO.readlines("armor.txt")
@@ -645,6 +659,7 @@ class Game
 		end
 	end
 
+	# repaints the "x" on the map when the player moves
 	def adjust_map(next_col, next_row)
 		x_loc = 22 + (next_col * 27)
 		y_loc = 33 + (next_row * 27)
@@ -698,8 +713,6 @@ class Game
 				insert_text(@game_map.get_tile_info)
 			elsif text_two.get.casecmp('gold') == 0
 				insert_text("You have #{@player.gold} gold pieces.")
-			elsif text_two.get.casecmp('map') == 0
-				print_map
 			elsif text_two.get.casecmp('show equippables') == 0
 				show_equippables
 			elsif /\Aunequip ([a-zA-Z])+(\s|[a-zA-Z])*$/ === text_two.get
@@ -748,9 +761,9 @@ class Game
 		@state = 'combat'
 	end
 
+	# retrieves all equippable items in the player's inventory
 	def show_equippables
 		insert_text("The following items in your inventory are equippable:\n")
-
 		@player.inventory.inventory.each_with_index do |item, i|
 			if item.is_a?(Weapon) || item.is_a?(Armor)
 				insert_text("Inventory slot #{i + 1}")
@@ -759,20 +772,21 @@ class Game
 		end
 	end
 
+	# retrieves all items in the player's inventory
 	def show_inventory
 		insert_text("Your inventory contains the following items:\n")
-
 		@player.inventory.inventory.each_with_index do |item, i|
 			insert_text("Inventory slot #{i + 1}")
 			insert_text(item.to_s)
 		end
 	end
 
+	# print all available player commands.  need to add this.
 	def help
 
 	end
 
-	# test method
+	# test method, Tk.sleep is working
 	def test
 		i = 0
 		num = 100
@@ -787,38 +801,26 @@ class Game
 		end
 	end
 
+	# move the player around the game map
 	def move(direction)
-		if direction == "n" && game_map.is_valid_move("n") == true
+		if direction.casecmp('n') == 0 && game_map.is_valid_move("n") == true
 			game_map.player_row -= 1
 			adjust_map(game_map.player_col, game_map.player_row)
 
-		elsif direction == "s" && game_map.is_valid_move("s") == true
+		elsif direction.casecmp('s') == 0 && game_map.is_valid_move("s") == true
 			game_map.player_row += 1
 			adjust_map(game_map.player_col, game_map.player_row)
 
-		elsif direction == "e" && game_map.is_valid_move("e") == true
+		elsif direction.casecmp('e') == 0 && game_map.is_valid_move("e") == true
 			game_map.player_col += 1
 			adjust_map(game_map.player_col, game_map.player_row)
 
-		elsif direction == "w" && game_map.is_valid_move("w") == true
+		elsif direction.casecmp('w') == 0 && game_map.is_valid_move("w") == true
 			game_map.player_col -= 1
 			adjust_map(game_map.player_col, game_map.player_row)
 
 		else
 			insert_text("That is not a valid move.\n")
-		end
-	end
-
-	def print_map
-		(0..9).each do |i|
-			(0..9).each do |j|
-				if i == game_map.player_row && j == game_map.player_col
-					print "x"
-				else
-					print game_map.game_map[i][j]
-				end
-			end
-			print "\n"
 		end
 	end
 
