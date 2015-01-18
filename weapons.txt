@@ -1,0 +1,5 @@
+1, "Longsword", "normal", "weapon", 10, 30, "Slashing", "art_assets/longsword.gif"
+1, "Broadsword", "normal", "weapon", 12, 20, "Slashing", "art_assets/broadsword.gif"
+1, "Dagger", "normal", "weapon", 6, 60, "Piercing", "art_assets/dagger.gif"
+1, "Mace", "normal", "weapon", 14, 15, "Mace Fighting", "art_assets/mace.gif"
+1, "Axe", "normal", "weapon", 16, 12, "Slashing", "art_assets/axe.gif"

@@ -1,0 +1,7 @@
+1, "Leather Cap", "normal", "armor_head", 2, "art_assets/leatherhelmet.gif"
+1, "Leather Gorget", "normal", "armor_neck", 2, "art_assets/leathergorget.gif"
+1, "Leather Tunic", "normal", "armor_body", 4, "art_assets/leathertunic.gif"
+1, "Leather Sleeves", "normal", "armor_arms", 2, "art_assets/leathersleeves.gif"
+1, "Leather Gloves", "normal", "armor_hands", 2, "art_assets/leathergloves.gif"
+1, "Leather Leggings", "normal", "armor_legs", 4, "art_assets/leatherpants.gif"
+1, "Leather Boots", "normal", "armor_feet", 2, "art_assets/leatherboots.gif"	

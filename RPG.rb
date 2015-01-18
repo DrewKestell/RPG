@@ -119,7 +119,7 @@ class Player < NPC
 		game.insert_text("Equipping #{@inventory.get_item(item).name}.\n") if item.is_a?(Integer)
 		self.send(item_slot, @inventory.get_item(item))
 		@inventory.remove_item(item)
-		update_paperdoll(game)
+		game.send("grid_#{item_slot}")
 	end
 
 	def equip_and_replace(item, item_slot, game)
@@ -129,60 +129,23 @@ class Player < NPC
 		game.insert_text("Equipping #{item}.\n")
 		self.send(item_slot, @inventory.get_item(item))
 		@inventory.remove_item(item)
-		update_paperdoll(game)
+		game.send("grid_#{item_slot}")
 	end
 
 	def execute_player_command
 		execute_player_command(self)
 	end
-	# you can make this method better
+
+	# this is currently not used, but could be useful if a player loaded a fresh character, and the game
+	# had to draw all equipment labels at once
 	def update_paperdoll(game)
-		if @armor_head == nil
-
-		else
-			game.grid_armor_helmet
-		end
-
-		if @armor_neck == nil
-
-		else
-			game.grid_armor_gorget
-		end
-
-		if @armor_body == nil
-
-		else
-			game.grid_armor_tunic
-		end
-
-		if @armor_arms == nil
-
-		else
-			game.grid_armor_sleeves
-		end
-
-		if @armor_hands == nil
-
-		else
-			game.grid_armor_gloves
-		end
-
-		if @armor_legs == nil
-
-		else
-			game.grid_armor_pants
-		end
-
-		if @armor_feet == nil
-
-		else
-			game.grid_armor_boots
-		end
-
-		if @weapon == nil
-
-		else
-			game.grid_weapon
+		array = %w[armor_head armor_neck armor_body armor_arms armor_hands armor_legs armor_feet weapon]
+		array.each do |slot|
+			if instance_variable_get("@#{slot}") != nil
+				game.send("grid_#{slot}")
+			else
+				# do nothing
+			end
 		end
 	end
 
@@ -591,43 +554,43 @@ class Game
 		Tk.mainloop
 	end
 
-	def grid_armor_helmet
+	def grid_armor_head
 		@head_image['file'] = @player.armor_head.image_url
 		@head_label['image'] = @head_image
 		@head_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 27
 	end
 
-	def grid_armor_gorget
+	def grid_armor_neck
 		@neck_image['file'] = @player.armor_neck.image_url
 		@neck_label['image'] = @neck_image
 		@neck_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 201, :pady => 59
 	end
 
-	def grid_armor_tunic
+	def grid_armor_body
 		@chest_image['file'] = @player.armor_body.image_url
 		@chest_label['image'] = @chest_image
 		@chest_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 110
 	end
 	
-	def grid_armor_sleeves
+	def grid_armor_arms
 		@arms_image['file'] = @player.armor_arms.image_url
 		@arms_label['image'] = @arms_image
 		@arms_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 74, :pady => 146
 	end
 
-	def grid_armor_gloves
+	def grid_armor_hands
 		@hands_image['file'] = @player.armor_hands.image_url
 		@hands_label['image'] = @hands_image
 		@hands_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 201, :pady => 146
 	end
 
-	def grid_armor_pants
+	def grid_armor_legs
 		@legs_image['file'] = @player.armor_legs.image_url
 		@legs_label['image'] = @legs_image
 		@legs_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 133, :pady => 220
 	end
 
-	def grid_armor_boots
+	def grid_armor_feet
 		@feet_image['file'] = @player.armor_feet.image_url
 		@feet_label['image'] = @feet_image
 		@feet_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 133, :pady => 296
@@ -641,22 +604,21 @@ class Game
 
 	def init_weapons
 		@weapons = []
-		@weapons.push(Weapon.new(1, "Longsword", 'normal', 'weapon', 10, 30, "Slashing", "art_assets/longsword.gif"))
-		@weapons.push(Weapon.new(1, "Broadsword", 'normal', 'weapon', 12, 20, "Slashing", "art_assets/longsword.gif"))
-		@weapons.push(Weapon.new(1, "Dagger", 'normal', 'weapon', 6, 60, "Piercing", "art_assets/longsword.gif"))
-		@weapons.push(Weapon.new(1, "Mace", 'normal', 'weapon', 14, 15, "Mace Fighting", "art_assets/longsword.gif"))
-		@weapons.push(Weapon.new(1, "Axe", 'normal', 'weapon', 16, 12, "Slashing", "art_assets/longsword.gif"))
+		weapons_array = IO.readlines("weapons.txt")
+		weapons_array.each do |item|
+			newitem = item.split(', ')
+			@weapons.push(Weapon.new(newitem[0], newitem[1], newitem[2], newitem[3], newitem[4], newitem[5], 
+				newitem[6], newitem[7]))
+		end
 	end
 
 	def init_armor
 		@armor = []
-		@armor.push(Armor.new(1, "Leather Cap", "normal", "armor_head", 2, "art_assets/leatherhelmet.gif"))
-		@armor.push(Armor.new(1, "Leather Gorget", "normal", "armor_neck", 2, "art_assets/leathergorget.gif"))
-		@armor.push(Armor.new(1, "Leather Tunic", "normal", "armor_body", 4, "art_assets/leathertunic.gif"))
-		@armor.push(Armor.new(1, "Leather Sleeves", "normal", "armor_arms", 2, "art_assets/leathersleeves.gif"))
-		@armor.push(Armor.new(1, "Leather Gloves", "normal", "armor_hands", 2, "art_assets/leathergloves.gif"))
-		@armor.push(Armor.new(1, "Leather Leggings", "normal", "armor_legs", 4, "art_assets/leatherpants.gif"))
-		@armor.push(Armor.new(1, "Leather Boots", "normal", "armor_feet", 2, "art_assets/leatherboots.gif"))	
+		armor_array = IO.readlines("armor.txt")
+		armor_array.each do |item|
+			newitem = item.split(', ')
+			@armor.push(Armor.new(newitem[0], newitem[1], newitem[2], newitem[3], newitem[4], newitem[5]))
+		end
 	end
 
 	def adjust_map(next_col, next_row)
@@ -676,6 +638,7 @@ class Game
 	 	text.state('disabled')
 	end
 
+	# this method checks the command the player entered and decides which command to execute
 	def execute_player_command
 		if state == 'pregame'
 			if text_two.get == 'start'
