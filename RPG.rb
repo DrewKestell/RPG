@@ -398,7 +398,7 @@ class GameMap
 	  (direction == "s" && @player_row < (@game_map.size - 1)) ||
 	  (direction == "e" && @player_col < (@game_map.size - 1)) ||
 	  (direction == "w" && @player_col > 0)
-	end	
+	end
 end
 
 class MonsterEncounter
@@ -513,6 +513,29 @@ class Game
 		@text['yscrollcommand'] = proc{|*args| @scroll.set(*args);}
 		@scroll['command'] = proc{|*args| @text.yview(*args)}
 
+		# right frame widgets
+		@name_label = Tk::Tile::Label.new(@right_frame) {text "Character Name: "}
+		@strength_label = Tk::Tile::Label.new(@right_frame) {text "Strength: "}
+		@strength_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
+		@dexterity_label = Tk::Tile::Label.new(@right_frame) {text "Dexterity: "}
+		@dexterity_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
+		@agility_label = Tk::Tile::Label.new(@right_frame) {text "Agility: "}
+		@agility_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
+		@intellect_label = Tk::Tile::Label.new(@right_frame) {text "Intellect: "}
+		@intellect_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
+		@constitution_label = Tk::Tile::Label.new(@right_frame) {text "Constitution: "}
+		@constitution_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
+		@wisdom_label = Tk::Tile::Label.new(@right_frame) {text "Wisdom: "}
+		@wisdom_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
+		@charisma_label = Tk::Tile::Label.new(@right_frame) {text "Charisma: "}
+		@charisma_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
+		@damage_label = Tk::Tile::Label.new(@right_frame) {text "Damage: "}
+		@damage_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
+		@armor_label = Tk::Tile::Label.new(@right_frame) {text "Armor: "}
+		@armor_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
+		@gold_label = Tk::Tile::Label.new(@right_frame) {text "Gold: "}
+		@gold_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
+
 		# create item container labels for paperdoll
 		array = %w[feet hands neck head legs arms body weapon]
 		array.each {|string| instance_variable_set("@#{string}_label", Tk::Tile::Label.new(@left_frame))}
@@ -559,8 +582,32 @@ class Game
 		@x_label.grid :column => 0, :row => 0, :rowspan => 2, :sticky => 'nw', :padx => 22, :pady => 33
 		@human_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 32, :pady => 10
 
+		# grid right frame widgets
+		@name_label.grid :column => 0, :row => 0, :columnspan => 4, :sticky => 'nw', :padx => 20, :pady => 10
+		@strength_label.grid :column => 0, :row => 1, :sticky => 'e', :padx => 27
+		@strength_value_label.grid :column => 1, :row => 1, :sticky => 'w'
+		@dexterity_label.grid :column => 2, :row => 1, :sticky => 'e', :padx => 27
+		@dexterity_value_label.grid :column => 3, :row => 1, :sticky => 'w'
+		@agility_label.grid :column => 0, :row => 2, :sticky => 'e', :padx => 27
+		@agility_value_label.grid :column => 1, :row => 2, :sticky => 'w'
+		@intellect_label.grid :column => 2, :row => 2, :sticky => 'e', :padx => 27
+		@intellect_value_label.grid :column => 3, :row => 2, :sticky => 'w'
+		@constitution_label.grid :column => 0, :row => 3, :sticky => 'e', :padx => 27
+		@constitution_value_label.grid :column => 1, :row => 3, :sticky => 'w'
+		@wisdom_label.grid :column => 2, :row => 3, :sticky => 'e', :padx => 27
+		@wisdom_value_label.grid :column => 3, :row => 3, :sticky => 'w'
+		@charisma_label.grid :column => 0, :row => 4, :sticky => 'e', :padx => 27
+		@charisma_value_label.grid :column => 1, :row => 4, :sticky => 'w'
+		@damage_label.grid :column => 0, :row => 5, :sticky => 'e', :padx => 27, :pady => 10
+		@damage_value_label.grid :column => 1, :row => 5, :sticky => 'w', :pady => 10
+		@armor_label.grid :column => 2, :row => 5, :sticky => 'e', :padx => 27
+		@armor_value_label.grid :column => 3, :row => 5, :sticky => 'w'
+		@gold_label.grid :column => 0, :row => 6, :sticky => 'e', :padx => 27
+		@gold_value_label.grid :column => 1, :row => 6, :sticky => 'w'
+
 		# configure resizing behavior
 		TkGrid.propagate(@left_frame, false)
+		TkGrid.propagate(@right_frame, false)
 		TkGrid.columnconfigure(@root, 0, :weight => 1)
 		TkGrid.rowconfigure(@root, 0, :weight => 1)
 		TkGrid.columnconfigure(@content, 0, :weight => 0)
@@ -880,6 +927,15 @@ class Game
 
 	def create_player(name)
 		@player = Player.new(1, name, 100, 100, 10, 10, 10, 10, 10, 10, 10)
+		@name_label.text = "Character Name:  #{@player.name.to_s}"
+		@strength_value_label.text = @player.strength
+		@dexterity_value_label.text = @player.dexterity
+		@agility_value_label.text = @player.agility
+		@intellect_value_label.text = @player.intellect
+		@constitution_value_label.text = @player.constitution
+		@wisdom_value_label.text = @player.wisdom
+		@charisma_value_label.text = @player.charisma
+		@gold_value_label.text = @player.gold
 		@create_character.destroy
 		insert_text("Welcome to Bloog's Quest, #{name}!")
 		insert_text("To see a list of commands, type 'help'.\n")
