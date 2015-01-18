@@ -132,38 +132,6 @@ class Player < NPC
 		update_paperdoll(game)
 	end
 
-	def grid_armor_helmet
-		@leatherhelmet_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 27
-	end
-
-	def grid_armor_gorget
-		@leathergorget_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 201, :pady => 59
-	end
-
-	def grid_armor_tunic
-		@leathertunic_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 110
-	end
-	
-	def grid_armor_sleeves
-		@leathersleeves_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 74, :pady => 146
-	end
-
-	def grid_armor_gloves
-		@leathergloves_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 201, :pady => 146
-	end
-
-	def grid_armor_pants
-		@leatherpants_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 133, :pady => 220
-	end
-
-	def grid_armor_boots
-		@leatherboots_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 133, :pady => 296
-	end
-
-	def grid_weapon
-		@longsword_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 54, :pady => 212
-	end
-
 	def execute_player_command
 		execute_player_command(self)
 	end
@@ -218,68 +186,25 @@ class Player < NPC
 		end
 	end
 
-	# you can make this method better
 	def equipment_to_s
 		string = ''
+		array = %w[armor_head armor_neck armor_body armor_arms armor_hands armor_legs armor_feet]
 
-		string.insert(-1, "Head:\n")
-		if @armor_head == nil
-			string.insert(-1, "Nothing equipped to head.\n\n")
-		else
-			string.insert(-1, "#{@armor_head.to_s}\n")
-		end
-		
-		string.insert(-1, "Neck:\n")
-		if @armor_neck == nil
-			string.insert(-1, "Nothing equipped to neck.\n\n")
-		else
-			string.insert(-1, "#{@armor_neck.to_s}\n")
+		array.each do |slot|
+			string.insert(-1, "#{slot.gsub('armor_', '').capitalize}:\n")
+			if instance_variable_get("@#{slot}") == nil
+				string.insert(-1, "Nothing equipped to #{slot.gsub('armor_', '')}.\n\n")
+			else
+				string.insert(-1, "#{instance_variable_get("@#{slot}").to_s}\n")
+			end
 		end
 
-		string.insert(-1, "Body:\n")
-		if @armor_body == nil
-			string.insert(-1, "Nothing equipped to body.\n\n")
-		else
-			string.insert(-1, "#{@armor_body.to_s}\n")
-		end
-
-		string.insert(-1, "Arms:\n")
-		if @armor_arms == nil
-			string.insert(-1, "Nothing equipped to arms.\n\n")
-		else
-			string.insert(-1, "#{@armor_arms.to_s}\n")
-		end
-
-		string.insert(-1, "Hands:\n")
-		if @armor_hands == nil
-			string.insert(-1, "Nothing equipped to hands.\n\n")
-		else
-			string.insert(-1, "#{@armor_hands.to_s}\n")
-		end
-
-		string.insert(-1, "Legs:\n")
-		if @armor_legs == nil
-			string.insert(-1, "Nothing equipped to legs.\n\n")
-		else
-			string.insert(-1, "#{@armor_legs.to_s}\n")
-		end
-
-		string.insert(-1, "Feet:\n")
-		if @armor_feet == nil
-			string.insert(-1, "Nothing equipped to feet.\n\n")
-		else
-			string.insert(-1, "#{@armor_feet.to_s}\n")
-		end
-
-		string.insert(-1, "Weapon:\n")
 		if @weapon == nil
 			string.insert(-1, "No weapon equipped.")
 		else
-			string.insert(-1, "#{@weapon.to_s}\n")
+			string.insert(-1, @weapon.to_s)
 		end
-
 		return string
-
 	end
 
 	# equipping by name is still ghetto...
@@ -299,10 +224,6 @@ class Player < NPC
 		else
 			game.insert_text("That item cannot be equipped.\n")
 		end
-	end
-
-	def survey
-		# skill: attempt to survey current tile to reveal tile info
 	end
 
 	def harvest_metal
@@ -350,7 +271,7 @@ class Item
 end
 
 class Weapon < Item
-	attr_accessor :weapon_damage, :weapon_speed, :skill_required
+	attr_accessor :weapon_damage, :weapon_speed, :skill_required, :image_url
 
 	def initialize(item_level, name, rarity, slot, weapon_damage, weapon_speed, skill_required, image_url)
 		super(item_level, name, rarity, slot)
@@ -373,7 +294,7 @@ class Weapon < Item
 end
 
 class Armor < Item
-	attr_accessor :armor_value
+	attr_accessor :armor_value, :image_url
 
 	def initialize(item_level, name, rarity, slot, armor_value, image_url)
 		super(item_level, name, rarity, slot)
@@ -439,41 +360,31 @@ class Tile
 		@type = type
 		@danger_level = rand(100)
 
+		def calculate_resources(wood, metal, animals, foraging)
+			@wood = rand(wood)
+			@metal = rand(metal)
+			@animals = rand(animals)
+			@foraging = rand(foraging)
+		end
+
 		if type == :prairie
-			@wood = 0
-			@metal = rand(10)
-			@animals = rand(30)
-			@foraging = rand(30)
+			calculate_resources(0, 10, 30, 30)
 
 		elsif type == :swamp
-			@wood = rand(20)
-			@metal = rand(10)
-			@animals = rand(15)
-			@foraging = rand(15)
+			calculate_resources(20, 10, 15, 15)
 
 		elsif type == :desert
-			@wood = 0
-			@metal = rand(20)
-			@animals = rand(5)
-			@foraging = rand(5)
+			calculate_resources(0, 20, 5, 5)
 
 		elsif type == :mountain
-			@wood = rand(10)
-			@metal = rand(30)
-			@animals = rand(10)
-			@foraging = rand(10)
+			calculate_resources(10, 30, 10, 10)
 
 		elsif type == :forest
-			@wood = rand(30)
-			@metal = rand(5)
-			@animals = rand(15)
-			@foraging = rand(15)
+			calculate_resources(30, 5, 15, 15)
 
 		else
-			@wood = rand(20)
-			@metal = rand(10)
-			@animals = rand(20)
-			@foraging = rand(25)
+			calculate_resources(20, 10, 20, 25)
+
 		end
 	end	
 
@@ -591,8 +502,8 @@ end
 
 class Game
 	attr_accessor :player, :text_two, :game_map, :weapons, :armor, :state, :root, :enter_button_var, :content, :left_frame, 
-	:scroll, :text, :enter_button, :right_frame, :encounter, :leatherboots_label, :leathergloves_label, :leathergorget_label,
-	:leatherhelmet_label, :leatherpants_label, :leathersleeves_label, :leathertunic_label, :longsword_label
+	:scroll, :text, :enter_button, :right_frame, :encounter, :feet_label, :hands_label, :neck_label,
+	:head_label, :legs_label, :arms_label, :chest_label, :weapon_label
 
 	def initialize
 		@game_map = GameMap.new
@@ -611,9 +522,9 @@ class Game
 		# create and configure GUI widgets
 		@content = Tk::Tile::Frame.new(@root) {padding "3 3 3 3"}
 		@left_frame = Tk::Tile::Frame.new(@content) {relief "sunken"; width 300; height 700}
-		@scroll = Tk::Tile::Scrollbar.new(@content) {orient 'vertical'}
 		@text = TkText.new(@content) {see 1.0; wrap 'word'; padx 10; pady 10; width 80; height 40; 
 			background '#2E2E2E'; foreground '#ffffff'}
+		@scroll = Tk::Tile::Scrollbar.new(@content) {orient 'vertical'}
 		@text_two = Tk::Tile::Entry.new(@content) {width 80; textvariable @enter_button_var}
 		@enter_button = Tk::Tile::Button.new(@content) {text 'Enter'; command 'execute_player_command'}
 		@right_frame = Tk::Tile::Frame.new(@content) {relief "sunken"; width 300; height 700}
@@ -626,44 +537,30 @@ class Game
 		@human_label = Tk::Tile::Label.new(@left_frame)
 		@human_image = TkPhotoImage.new(:file => "body.gif")
 		@human_label['image'] = @human_image
+		@text['yscrollcommand'] = proc{|*args| @scroll.set(*args);}
+		@scroll['command'] = proc{|*args| @text.yview(*args)}
 
-		# item images
-		@leatherboots_label = Tk::Tile::Label.new(@left_frame)
-		@leatherboots_image = TkPhotoImage.new(:file => "art_assets/leatherboots.gif")
-		@leatherboots_label['image'] = @leatherboots_image
-
-		@leathergloves_label = Tk::Tile::Label.new(@left_frame)
-		@leathergloves_image = TkPhotoImage.new(:file => "art_assets/leathergloves.gif")
-		@leathergloves_label['image'] = @leathergloves_image
-
-		@leathergorget_label = Tk::Tile::Label.new(@left_frame)
-		@leathergorget_image = TkPhotoImage.new(:file => "art_assets/leathergorget.gif")
-		@leathergorget_label['image'] = @leathergorget_image
-
-		@leatherhelmet_label = Tk::Tile::Label.new(@left_frame)
-		@leatherhelmet_image = TkPhotoImage.new(:file => "art_assets/leatherhelmet.gif")
-		@leatherhelmet_label['image'] = @leatherhelmet_image
-
-		@leatherpants_label = Tk::Tile::Label.new(@left_frame)
-		@leatherpants_image = TkPhotoImage.new(:file => "art_assets/leatherpants.gif")
-		@leatherpants_label['image'] = @leatherpants_image
-
-		@leathersleeves_label = Tk::Tile::Label.new(@left_frame)
-		@leathersleeves_image = TkPhotoImage.new(:file => "art_assets/leathersleeves.gif")
-		@leathersleeves_label['image'] = @leathersleeves_image
-
-		@leathertunic_label = Tk::Tile::Label.new(@left_frame)
-		@leathertunic_image = TkPhotoImage.new(:file => "art_assets/leathertunic.gif")
-		@leathertunic_label['image'] = @leathertunic_image
-
-		@longsword_label = Tk::Tile::Label.new(@left_frame)
-		@longsword_image = TkPhotoImage.new(:file => "art_assets/longsword.gif")
-		@longsword_label['image'] = @longsword_image
+		# create item container labels for paperdoll
+		array = %w[feet hands neck head legs arms chest weapon]
+		array.each {|string| instance_variable_set("@#{string}_label", Tk::Tile::Label.new(@left_frame))}
+		array.each {|string| instance_variable_set("@#{string}_image", TkPhotoImage.new)}
 
 		# more configuration
 		@text_two.focus
 		@text.insert('end', "To start the game, type 'start'\n")
 		@text.state('disabled')
+
+		# bindings
+		@text_two.bind("KeyPress-Return") {execute_player_command}
+		@text_two.bind("KeyPress-KP_Enter") {execute_player_command}
+		@head_label.bind("1") {get_item_info(@player.armor_head)}
+		@neck_label.bind("1") {get_item_info(@player.armor_neck)}
+		@chest_label.bind("1") {get_item_info(@player.armor_body)}
+		@arms_label.bind("1") {get_item_info(@player.armor_arms)}
+		@hands_label.bind("1") {get_item_info(@player.armor_hands)}
+		@legs_label.bind("1") {get_item_info(@player.armor_legs)}
+		@feet_label.bind("1") {get_item_info(@player.armor_feet)}
+		@weapon_label.bind("1") {get_item_info(@player.weapon)}
 
 		# grid GUI elements
 		@content.grid :column => 0, :row => 0, :sticky => 'nsew'
@@ -691,47 +588,55 @@ class Game
 		TkGrid.rowconfigure(@left_frame, 0, :weight => 0)
 		TkGrid.rowconfigure(@left_frame, 1, :weight => 0)
 
-		# bindings
-		@text_two.bind("KeyPress-Return") {execute_player_command}
-		@text_two.bind("KeyPress-KP_Enter") {execute_player_command}
-
 		Tk.mainloop
 	end
 
 	def grid_armor_helmet
-		@leatherhelmet_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 27
+		@head_image['file'] = @player.armor_head.image_url
+		@head_label['image'] = @head_image
+		@head_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 27
 	end
 
 	def grid_armor_gorget
-		@leathergorget_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 201, :pady => 59
+		@neck_image['file'] = @player.armor_neck.image_url
+		@neck_label['image'] = @neck_image
+		@neck_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 201, :pady => 59
 	end
 
 	def grid_armor_tunic
-		@leathertunic_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 110
+		@chest_image['file'] = @player.armor_body.image_url
+		@chest_label['image'] = @chest_image
+		@chest_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 110
 	end
 	
 	def grid_armor_sleeves
-		@leathersleeves_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 74, :pady => 146
+		@arms_image['file'] = @player.armor_arms.image_url
+		@arms_label['image'] = @arms_image
+		@arms_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 74, :pady => 146
 	end
 
 	def grid_armor_gloves
-		@leathergloves_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 201, :pady => 146
+		@hands_image['file'] = @player.armor_hands.image_url
+		@hands_label['image'] = @hands_image
+		@hands_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 201, :pady => 146
 	end
 
 	def grid_armor_pants
-		@leatherpants_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 133, :pady => 220
+		@legs_image['file'] = @player.armor_legs.image_url
+		@legs_label['image'] = @legs_image
+		@legs_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 133, :pady => 220
 	end
 
 	def grid_armor_boots
-		@leatherboots_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 133, :pady => 296
+		@feet_image['file'] = @player.armor_feet.image_url
+		@feet_label['image'] = @feet_image
+		@feet_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 133, :pady => 296
 	end
 
 	def grid_weapon
-		@longsword_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 54, :pady => 212
-	end
-
-	def execute_player_command
-		execute_player_command(self)
+		@weapon_image['file'] = @player.weapon.image_url
+		@weapon_label['image'] = @weapon_image
+		@weapon_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 54, :pady => 212
 	end
 
 	def init_weapons
@@ -792,11 +697,10 @@ class Game
 				array.shift
 				integer = array.join(' ').to_i
 				@player.equip(integer, self)
-			elsif text_two.get == 'move e' || 
-				text_two.get == 'move w' ||
-				text_two.get == 'move s' ||
-				text_two.get == 'move n'
-
+			elsif (text_two.get == 'move e') || 
+				(text_two.get == 'move w')||
+				(text_two.get == 'move s') ||
+				(text_two.get == 'move n')
 				array = text_two.get.split(' ')
 				array.shift
 				direction = array.join(' ')
@@ -818,12 +722,10 @@ class Game
 				insert_text("You can either use the name of the item, or the slot in your inventory where item is stored.")
 				insert_text("For example, you could type 'equip Longsword'.")
 				insert_text("Or, if the item is in inventory slot 1, you could type 'equip 1'.")
-				insert_text("To see all equippable items you currently posess, type 'show equippables'.")	
+				insert_text("To see all equippable items you currently posess, type 'show equippables'.\n")	
 			elsif text_two.get == 'start'
 				insert_text("Game already started.")
-			elsif text_two.get == ''
-				# do nothing
-			elsif /\s/ === text_two.get
+			elsif (text_two.get == '') || (/\s/ === text_two.get)
 				# do nothing
 			elsif text_two.get == 'test'
 				test
@@ -887,47 +789,31 @@ class Game
 			text.state('normal')
 			text.insert('end', "Testing...\n")
 			text.see('end')
-		  	text.state('disabled')
+		  text.state('disabled')
 	 		i += 1
-	  		Tk.sleep(50)
+	  	Tk.sleep(50)
 		end
 	end
 
 	def move(direction)
-		if direction == "n"
-			if game_map.is_valid_move("n") == true
-				game_map.player_row -= 1
-				adjust_map(game_map.player_col, game_map.player_row)
-			else
-				puts "That is not a valid move"
-			end
+		if direction == "n" && game_map.is_valid_move("n") == true
+			game_map.player_row -= 1
+			adjust_map(game_map.player_col, game_map.player_row)
 
-		elsif direction == "s"
-			if game_map.is_valid_move("s") == true
-				game_map.player_row += 1
-				adjust_map(game_map.player_col, game_map.player_row)
-			else
-				puts "That is not a valid move"
-			end
+		elsif direction == "s" && game_map.is_valid_move("s") == true
+			game_map.player_row += 1
+			adjust_map(game_map.player_col, game_map.player_row)
 
-		elsif direction == "e"
-			if game_map.is_valid_move("e") == true
-				game_map.player_col += 1
-				adjust_map(game_map.player_col, game_map.player_row)
-			else
-				puts "That is not a valid move"
-			end
+		elsif direction == "e" && game_map.is_valid_move("e") == true
+			game_map.player_col += 1
+			adjust_map(game_map.player_col, game_map.player_row)
 
-		elsif direction == "w"
-			if game_map.is_valid_move("w") == true
-				game_map.player_col -= 1
-				adjust_map(game_map.player_col, game_map.player_row)
-			else
-				puts "That is not a valid move"
-			end
+		elsif direction == "w" && game_map.is_valid_move("w") == true
+			game_map.player_col -= 1
+			adjust_map(game_map.player_col, game_map.player_row)
 
 		else
-			# do nothing
+			insert_text("That is not a valid move.\n")
 		end
 	end
 
@@ -942,6 +828,31 @@ class Game
 			end
 			print "\n"
 		end
+	end
+
+	def get_item_info(item)
+		item_info = TkToplevel.new {title "Item Info"}
+		item_info.geometry = '+400+360'
+
+		item_label = Tk::Tile::Label.new(item_info)
+		item_image = TkPhotoImage.new(:file => item.image_url)
+		item_label['image'] = item_image
+		item_label.grid :column => 0, :row => 0, :sticky => 'nw', :padx => 10, :pady => 5
+
+		item_name = item.name
+		item_name_label = Tk::Tile::Label.new(item_info) {text item_name}
+		item_name_label.grid :column => 1, :row => 0, :sticky => 'nw', :pady => 27
+
+		item_stats = item.to_s
+		item_stats_label = Tk::Tile::Label.new(item_info) {text item_stats}
+		item_stats_label.grid :column => 0, :row => 1, :columnspan => 2, :sticky => 'nw', :padx => 10
+
+		ok_button = Tk::Tile::Button.new(item_info) {text "Continue"; command {item_info.destroy}}
+		ok_button.grid :column => 0, :row => 2, :columnspan => 2, :sticky => 'nw', :padx => 30, :pady => '0 15'
+		ok_button.focus
+		ok_button.bind("KeyPress-Return") {item_info.destroy}
+		ok_button.bind("KeyPress-KP_Enter") {item_info.destroy}
+		ok_button.bind("KeyPress-Escape") {item_info.destroy}
 	end
 
 	def start
@@ -960,6 +871,7 @@ class Game
 			char_name.bind("KeyPress-KP_Enter") {create_player(char_name_var)}
 			char_name.grid :column => 0, :row => 1, :padx => 50, :pady => '0 20'
 
+			# i have no idea why i can't use the command option to bind this button to the create_player method?
 			create_character_button = Tk::Tile::Button.new(@create_character) {text 'Start Game'}
 			create_character_button.grid :column => 0, :row => 2, :pady => 15
 
