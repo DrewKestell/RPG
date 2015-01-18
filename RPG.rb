@@ -170,7 +170,27 @@ class Player < NPC
 		return string
 	end
 
-	# equipping by name is still ghetto...
+	def unequip(item, game)
+		item_slot = ''
+		array = %w[armor_head armor_neck armor_body armor_arms armor_hands armor_legs armor_feet weapon]
+		array.each do |slot|
+			if instance_variable_get("@#{slot}") == nil
+				# do nothing
+			else
+				if instance_variable_get("@#{slot}").name.casecmp(item) == 0
+					item_slot = slot
+				else
+					# do nothing
+				end
+			end
+		end
+		temp_item = instance_variable_get("@#{item_slot}")
+		instance_variable_set("@#{item_slot}", nil)
+		game.insert_text("Unequipping #{temp_item.name}.\n")
+		@inventory.add_item(temp_item)
+		game.destroy_label(item_slot)
+	end
+
 	def equip(item, game)
 		if @inventory.get_item(item) == nil
 			game.insert_text("Item not found.\n")
@@ -466,7 +486,7 @@ end
 class Game
 	attr_accessor :player, :text_two, :game_map, :weapons, :armor, :state, :root, :enter_button_var, :content, :left_frame, 
 	:scroll, :text, :enter_button, :right_frame, :encounter, :feet_label, :hands_label, :neck_label,
-	:head_label, :legs_label, :arms_label, :chest_label, :weapon_label
+	:head_label, :legs_label, :arms_label, :body_label, :weapon_label
 
 	def initialize
 		@game_map = GameMap.new
@@ -504,7 +524,7 @@ class Game
 		@scroll['command'] = proc{|*args| @text.yview(*args)}
 
 		# create item container labels for paperdoll
-		array = %w[feet hands neck head legs arms chest weapon]
+		array = %w[feet hands neck head legs arms body weapon]
 		array.each {|string| instance_variable_set("@#{string}_label", Tk::Tile::Label.new(@left_frame))}
 		array.each {|string| instance_variable_set("@#{string}_image", TkPhotoImage.new)}
 
@@ -518,7 +538,7 @@ class Game
 		@text_two.bind("KeyPress-KP_Enter") {execute_player_command}
 		@head_label.bind("1") {get_item_info(@player.armor_head)}
 		@neck_label.bind("1") {get_item_info(@player.armor_neck)}
-		@chest_label.bind("1") {get_item_info(@player.armor_body)}
+		@body_label.bind("1") {get_item_info(@player.armor_body)}
 		@arms_label.bind("1") {get_item_info(@player.armor_arms)}
 		@hands_label.bind("1") {get_item_info(@player.armor_hands)}
 		@legs_label.bind("1") {get_item_info(@player.armor_legs)}
@@ -554,6 +574,10 @@ class Game
 		Tk.mainloop
 	end
 
+	def destroy_label(slot)
+		TkGrid.remove(instance_variable_get("@#{slot.gsub('armor_', '')}_label"))
+	end
+
 	def grid_armor_head
 		@head_image['file'] = @player.armor_head.image_url
 		@head_label['image'] = @head_image
@@ -567,9 +591,9 @@ class Game
 	end
 
 	def grid_armor_body
-		@chest_image['file'] = @player.armor_body.image_url
-		@chest_label['image'] = @chest_image
-		@chest_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 110
+		@body_image['file'] = @player.armor_body.image_url
+		@body_label['image'] = @body_image
+		@body_label.grid :column => 0, :row => 1, :sticky => 'nw', :padx => 141, :pady => 110
 	end
 	
 	def grid_armor_arms
@@ -608,7 +632,7 @@ class Game
 		weapons_array.each do |item|
 			newitem = item.split(', ')
 			@weapons.push(Weapon.new(newitem[0], newitem[1], newitem[2], newitem[3], newitem[4], newitem[5], 
-				newitem[6], newitem[7]))
+				newitem[6], newitem[7].chomp))
 		end
 	end
 
@@ -617,7 +641,7 @@ class Game
 		armor_array = IO.readlines("armor.txt")
 		armor_array.each do |item|
 			newitem = item.split(', ')
-			@armor.push(Armor.new(newitem[0], newitem[1], newitem[2], newitem[3], newitem[4], newitem[5]))
+			@armor.push(Armor.new(newitem[0], newitem[1], newitem[2], newitem[3], newitem[4], newitem[5].chomp))
 		end
 	end
 
@@ -641,58 +665,63 @@ class Game
 	# this method checks the command the player entered and decides which command to execute
 	def execute_player_command
 		if state == 'pregame'
-			if text_two.get == 'start'
+			if text_two.get.casecmp('start') == 0
 				start
 			else
 				insert_text("To start the game, type 'start'")
 			end
 
 		elsif state == 'normal'
-			if text_two.get == 'fight'
+			if text_two.get.casecmp('fight') == 0
 				fight
-			elsif /equip ([a-zA-Z])+(\s|[a-zA-Z])*$/ === text_two.get
+			elsif /\Aequip ([a-zA-Z])+(\s|[a-zA-Z])*$/ === text_two.get
 				array = text_two.get.split(' ')
 				array.shift
 				string = array.join(' ')
 				@player.equip(string, self)
-			elsif /equip (\d)+$/ === text_two.get
+			elsif /\Aequip (\d)+$/ === text_two.get
 				array = text_two.get.split(' ')
 				array.shift
 				integer = array.join(' ').to_i
 				@player.equip(integer, self)
-			elsif (text_two.get == 'move e') || 
-				(text_two.get == 'move w')||
-				(text_two.get == 'move s') ||
-				(text_two.get == 'move n')
+			elsif (text_two.get.casecmp('move e') == 0) || 
+				(text_two.get.casecmp('move w') == 0)||
+				(text_two.get.casecmp('move s') == 0) ||
+				(text_two.get.casecmp('move n') == 0)
 				array = text_two.get.split(' ')
 				array.shift
 				direction = array.join(' ')
 				move(direction)
-			elsif text_two.get == 'equipment'
+			elsif text_two.get.casecmp('equipment') == 0
 				insert_text(@player.equipment_to_s)
-			elsif text_two.get == 'survey'
+			elsif text_two.get.casecmp('survey') == 0
 				insert_text(@game_map.get_tile_info)
-			elsif text_two.get == 'gold'
+			elsif text_two.get.casecmp('gold') == 0
 				insert_text("You have #{@player.gold} gold pieces.")
-			elsif text_two.get == 'map'
+			elsif text_two.get.casecmp('map') == 0
 				print_map
-			elsif text_two.get == 'show equippables'
+			elsif text_two.get.casecmp('show equippables') == 0
 				show_equippables
-			elsif text_two.get == 'show inventory'
+			elsif /\Aunequip ([a-zA-Z])+(\s|[a-zA-Z])*$/ === text_two.get
+				array = text_two.get.split(' ')
+				array.shift
+				string = array.join(' ')
+				@player.unequip(string, self)
+			elsif text_two.get.casecmp('show inventory') == 0
 				show_inventory
-			elsif text_two.get == 'equip'
+			elsif text_two.get.casecmp('equip') == 0
 				insert_text("You must specify the item you want to equip. and the item must be in your inventory.")
 				insert_text("You can either use the name of the item, or the slot in your inventory where item is stored.")
 				insert_text("For example, you could type 'equip Longsword'.")
 				insert_text("Or, if the item is in inventory slot 1, you could type 'equip 1'.")
 				insert_text("To see all equippable items you currently posess, type 'show equippables'.\n")	
-			elsif text_two.get == 'start'
+			elsif text_two.get.casecmp('start') == 0
 				insert_text("Game already started.")
 			elsif (text_two.get == '') || (/\s/ === text_two.get)
 				# do nothing
-			elsif text_two.get == 'test'
+			elsif text_two.get.casecmp('test') == 0
 				test
-			elsif text_two.get == 'help'
+			elsif text_two.get.casecmp('help') == 0
 				help
 			else
 				insert_text("Unknown command.\n")
