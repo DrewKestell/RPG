@@ -3,10 +3,11 @@ require 'tkextlib/tile'
 
 class NPC
 	attr_accessor :level, :name, :health, :mana, :strength, :dexterity, :agility, :intellect, :constitution, :wisdom, 
-	:charisma, :inventory, :gold
+	:charisma, :inventory, :gold, :armor, :damage, :attack_speed
 
 	def initialize(level=1, name="NPC", health=100, mana=100, strength=10, dexterity=10, agility=10, 
-		intellect=10, constitution=10, wisdom=10, charisma=10, inventory=Inventory.new, gold=0)
+		intellect=10, constitution=10, wisdom=10, charisma=10, inventory=Inventory.new, gold=0, armor=0, damage=2, 
+		attack_speed=2)
 		@level = level
 		@name = name
 		@health = health
@@ -20,6 +21,9 @@ class NPC
 		@charisma = charisma
 		@inventory = inventory
 		@gold = gold
+		@armor = armor
+		@damage = damage
+		@attack_speed = attack_speed
 	end
 end
 
@@ -30,9 +34,10 @@ class Player < NPC
 	:armor_legs, :armor_feet
 
 	def initialize(level=1, name="Player", health=100, mana=100, strength=10, dexterity=10, agility=10, 
-		intellect=10, constitution=10, wisdom=10, charisma=10, inventory=Inventory.new, gold=0, skills=Skills.new)
+		intellect=10, constitution=10, wisdom=10, charisma=10, inventory=Inventory.new, gold=0, skills=Skills.new, 
+		armor=0, damage=2, attack_speed=2)
 		super(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma, 
-			inventory, gold)
+			inventory, gold, armor, damage, attack_speed)
 		@skills = skills
 		@armor_head = nil
 		@armor_neck = nil
@@ -108,22 +113,80 @@ class Player < NPC
 		end
 	end
 
+	# this method can be made better
+	def adjust_stats(game, removed_item=nil)
+		array = [@armor_head, @armor_neck, @armor_body, @armor_arms, @armor_hands, @armor_legs, @armor_feet, @weapon]
+		if removed_item == nil
+			array.each do |item|
+				if item.is_a?(Armor)
+					@armor += item.armor_value
+				elsif item.is_a?(Weapon)
+					@damage += item.weapon_damage
+					@attack_speed += item.weapon_speed
+				else
+					# do stuff
+				end
+
+				if item.respond_to?(:bonus_strength)
+					@strength += item.bonus_strength
+					@dexterity += item.bonus_dexterity
+					@agility += item.bonus_agility
+					@intellect += item.bonus_intellect
+					@constitution += item.bonus_constitution
+					@wisdom += item.bonus_wisdom
+					@charisma += item.bonus_charisma
+				else
+					# do stuff
+				end
+			end
+
+		elsif removed_item.is_a?(Item)
+
+			if removed_item.is_a?(Armor)
+				@armor -= removed_item.armor_value
+			elsif removed_item.is_a?(Weapon)
+				@damage -= removed_item.weapon_damage
+				@attack_speed -= removed_item.weapon_speed
+			else
+				# do stuff
+			end
+
+			if removed_item.respond_to?(:bonus_strength)
+				@strength -= removed_item.bonus_strength
+				@dexterity -= removed_item.bonus_dexterity
+				@agility -= removed_item.bonus_agility
+				@intellect -= removed_item.bonus_intellect
+				@constitution -= removed_item.bonus_constitution
+				@wisdom -= removed_item.bonus_wisdom
+				@charisma -= removed_item.bonus_charisma
+			else
+				# do stuff
+			end
+
+		else
+			# do stuff
+		end
+		game.adjust_stat_labels(@strength, @dexterity, @agility, @intellect, @constitution, @wisdom, @charisma, @armor, @damage, @attack_speed)
+	end
+
 	def equip_to_empty(item, item_slot, game)
-		game.insert_text("Equipping #{item}.\n") if item.is_a?(String)
-		game.insert_text("Equipping #{@inventory.get_item(item).name}.\n") if item.is_a?(Integer)
+		game.insert_text("Equipping #{@inventory.get_item(item).name}.\n")
 		self.send(item_slot, @inventory.get_item(item))
 		@inventory.remove_item(item)
 		game.send("grid_#{item_slot}")
+		adjust_stats(game)
 	end
 
 	def equip_and_replace(item, item_slot, game)
 		temp_item = self.send(item_slot)
 		game.insert_text("Unequipping #{temp_item.name}.\n")
 		@inventory.add_item(temp_item)
+		adjust_stats(game, temp_item)
 		game.insert_text("Equipping #{item}.\n")
 		self.send(item_slot, @inventory.get_item(item))
 		@inventory.remove_item(item)
 		game.send("grid_#{item_slot}")
+		adjust_stats(game, @inventory.get_item(item))
 	end
 
 	# this is currently not used, but could be useful if a player loaded a fresh character, and the game
@@ -179,6 +242,7 @@ class Player < NPC
 		game.insert_text("Unequipping #{temp_item.name}.\n")
 		@inventory.add_item(temp_item)
 		game.destroy_label(item_slot)
+		adjust_stats(game, temp_item)
 	end
 
 	def equip(item, game)
@@ -219,9 +283,10 @@ end
 
 class Monster < NPC
 	def initialize(level=1, name="Monster", health=100, mana=100, strength=10, dexterity=10, agility=10, 
-			intellect=10, constitution=10, wisdom=10, charisma=10, inventory=Inventory.new, gold=0)
+			intellect=10, constitution=10, wisdom=10, charisma=10, inventory=Inventory.new, gold=0, armor=0, 
+			damage=2, attack_speed=2)
 		super(level, name, health, mana, strength, dexterity, agility, intellect, constitution, wisdom, charisma, 
-			inventory, gold)
+			inventory, gold, armor, damage, attack_speed)
 	end
 end
 
@@ -248,21 +313,53 @@ class Weapon < Item
 
 	def initialize(item_level, name, rarity, slot, weapon_damage, weapon_speed, skill_required, image_url)
 		super(item_level, name, rarity, slot)
-		@weapon_damage = weapon_damage
-		@weapon_speed = weapon_speed
+		@weapon_damage = weapon_damage.to_i
+		@weapon_speed = weapon_speed.to_i
 		@skill_required = skill_required
 		@image_url = image_url
 	end
 
 	def to_s
-		"Item type: Weapon\n" + 
-		"Item level: #{@item_level}\n" + 
-		"Item name: #{@name}\n" + 
-		"Rarity: #{@rarity}\n" + 
-		"Equip slot: weapon\n" + 
-		"Damage: #{@weapon_damage}\n" + 
-		"Speed: #{@weapon_speed}\n" + 
-		"Skill required: #{@skill_required}\n"
+		"Item type:  Weapon\n" + 
+		"Item level:  #{@item_level}\n" + 
+		"Item name:  #{@name}\n" + 
+		"Rarity:  Normal\n" + 
+		"Equip slot:  Weapon\n" + 
+		"Damage:  #{@weapon_damage}\n" + 
+		"Speed:  #{@weapon_speed}\n" + 
+		"Skill required:  #{@skill_required}\n"
+	end
+end
+
+class MagicalWeapon < Weapon
+	attr_accessor :bonus_strength, :bonus_dexterity, :bonus_agility, :bonus_intellect, :bonus_constitution, 
+	:bonus_wisdom, :bonus_charisma
+
+	def initialize(item_level, name, rarity, slot, weapon_damage, weapon_speed, skill_required, image_url, 
+		bonus_strength, bonus_dexterity, bonus_agility, bonus_intellect, bonus_constitution, bonus_wisdom, 
+		bonus_charisma)
+		super(item_level, name, rarity, slot, weapon_damage, weapon_speed, skill_required, image_url)
+		@bonus_strength = bonus_strength.to_i
+		@bonus_dexterity = bonus_dexterity.to_i
+		@bonus_agility = bonus_agility.to_i
+		@bonus_intellect = bonus_intellect.to_i
+		@bonus_constitution = bonus_constitution.to_i
+		@bonus_wisdom = bonus_wisdom.to_i
+		@bonus_charisma = bonus_charisma.to_i
+	end
+
+	def to_s
+		string = ''
+		array = %w[@bonus_strength @bonus_dexterity @bonus_agility @bonus_intellect @bonus_constitution 
+			@bonus_wisdom @bonus_charisma]
+		array.each do |slot|
+			stat_value = instance_variable_get("#{slot}")
+			if stat_value > 0
+				# i'm not sure how the &:capitalize works, i stole it from stackoverflow.  read up on this.
+				string.insert(-1, "#{slot.gsub('_',' ').gsub('@','').split.map(&:capitalize).join(' ')}:  #{stat_value}\n")
+			end
+		end
+		return super + string
 	end
 end
 
@@ -271,22 +368,51 @@ class Armor < Item
 
 	def initialize(item_level, name, rarity, slot, armor_value, image_url)
 		super(item_level, name, rarity, slot)
-		@armor_value = armor_value
+		@armor_value = armor_value.to_i
 		@image_url = image_url
 	end
 
 	def to_s
-		"Item type: Armor\n" + 
-		"Item level: #{@item_level}\n" + 
-		"Item name: #{@name}\n" + 
-		"Rarity: #{@rarity}\n" + 
-		"Equip slot: #{@slot}\n" + 
-		"Armor value: #{@armor_value}\n"
+		"Item type:  Armor\n" + 
+		"Item level:  #{@item_level}\n" + 
+		"Item name:  #{@name}\n" + 
+		"Rarity:  #{@rarity.capitalize}\n" + 
+		"Equip slot:  #{@slot.gsub('armor_','').capitalize}\n" + 
+		"Armor value:  #{@armor_value}\n"
 	end
 end
 
-# using a hash is causing problems when adding multiple instances of the same item into the player's inventory.
-# the most recently added item will overwrite the current item if they have the same name
+class MagicalArmor < Armor
+	attr_accessor :bonus_strength, :bonus_dexterity, :bonus_agility, :bonus_intellect, :bonus_constitution, 
+	:bonus_wisdom, :bonus_charisma
+
+	def initialize(item_level, name, rarity, slot, armor_value, image_url, bonus_strength, bonus_dexterity, 
+		bonus_agility, bonus_intellect, bonus_constitution, bonus_wisdom, bonus_charisma)
+		super(item_level, name, rarity, slot, armor_value, image_url)
+		@bonus_strength = bonus_strength.to_i
+		@bonus_dexterity = bonus_dexterity.to_i
+		@bonus_agility = bonus_agility.to_i
+		@bonus_intellect = bonus_intellect.to_i
+		@bonus_constitution = bonus_constitution.to_i
+		@bonus_wisdom = bonus_wisdom.to_i
+		@bonus_charisma = bonus_charisma.to_i
+	end
+
+	def to_s
+		string = ''
+		array = %w[@bonus_strength @bonus_dexterity @bonus_agility @bonus_intellect @bonus_constitution 
+			@bonus_wisdom @bonus_charisma]
+		array.each do |slot|
+			stat_value = instance_variable_get("#{slot}")
+			if stat_value > 0
+				# i'm not sure how the &:capitalize works, i stole it from stackoverflow.  read up on this.
+				string.insert(-1, "#{slot.gsub('_',' ').gsub('@','').split.map(&:capitalize).join(' ')}:  #{stat_value}\n")
+			end
+		end
+		return super + string
+	end
+end
+
 class Inventory
 	attr_accessor :inventory
 
@@ -371,6 +497,7 @@ class Tile
 	end
 end
 
+# 2D-array of tile objects represents the game world
 class GameMap
 	attr_accessor :game_map, :tile_set, :player_col, :player_row
 
@@ -401,6 +528,7 @@ class GameMap
 	end
 end
 
+# combat needs to be balanced
 class MonsterEncounter
 	attr_accessor :monster, :game
 
@@ -424,6 +552,7 @@ class MonsterEncounter
 				game.insert_text("You have defeated the #{@monster.name}!")
 				game.insert_text("You receieve #{@monster.gold} gold pieces!")
 				@game.player.gold += @monster.gold
+				@game.gold_value_label.text = @game.player.gold
 				game.state = 'normal'
 				return
 			else
@@ -476,7 +605,7 @@ end
 class Game
 	attr_accessor :player, :text_two, :game_map, :weapons, :armor, :state, :root, :enter_button_var, :content, :left_frame, 
 	:scroll, :text, :enter_button, :right_frame, :encounter, :feet_label, :hands_label, :neck_label,
-	:head_label, :legs_label, :arms_label, :body_label, :weapon_label
+	:head_label, :legs_label, :arms_label, :body_label, :weapon_label, :gold_value_label
 
 	def initialize
 		@game_map = GameMap.new
@@ -531,6 +660,8 @@ class Game
 		@charisma_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
 		@damage_label = Tk::Tile::Label.new(@right_frame) {text "Damage: "}
 		@damage_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
+		@attackspeed_label = Tk::Tile::Label.new(@right_frame) {text "Attack Speed: "}
+		@attackspeed_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
 		@armor_label = Tk::Tile::Label.new(@right_frame) {text "Armor: "}
 		@armor_value_label = Tk::Tile::Label.new(@right_frame) {text "0"}
 		@gold_label = Tk::Tile::Label.new(@right_frame) {text "Gold: "}
@@ -587,7 +718,7 @@ class Game
 		@strength_label.grid :column => 0, :row => 1, :sticky => 'e', :padx => 27
 		@strength_value_label.grid :column => 1, :row => 1, :sticky => 'w'
 		@dexterity_label.grid :column => 2, :row => 1, :sticky => 'e', :padx => 27
-		@dexterity_value_label.grid :column => 3, :row => 1, :sticky => 'w'
+		@dexterity_value_label.grid :column => 3, :row => 1, :sticky => 'w', :padx => '0 30'
 		@agility_label.grid :column => 0, :row => 2, :sticky => 'e', :padx => 27
 		@agility_value_label.grid :column => 1, :row => 2, :sticky => 'w'
 		@intellect_label.grid :column => 2, :row => 2, :sticky => 'e', :padx => 27
@@ -600,14 +731,15 @@ class Game
 		@charisma_value_label.grid :column => 1, :row => 4, :sticky => 'w'
 		@damage_label.grid :column => 0, :row => 5, :sticky => 'e', :padx => 27, :pady => 10
 		@damage_value_label.grid :column => 1, :row => 5, :sticky => 'w', :pady => 10
-		@armor_label.grid :column => 2, :row => 5, :sticky => 'e', :padx => 27
-		@armor_value_label.grid :column => 3, :row => 5, :sticky => 'w'
-		@gold_label.grid :column => 0, :row => 6, :sticky => 'e', :padx => 27
-		@gold_value_label.grid :column => 1, :row => 6, :sticky => 'w'
+		@attackspeed_label.grid :column => 2, :row => 5, :sticky => 'e', :padx => 27
+		@attackspeed_value_label.grid :column => 3, :row => 5, :sticky => 'w'
+		@armor_label.grid :column => 0, :row => 6, :sticky => 'e', :padx => 27
+		@armor_value_label.grid :column => 1, :row => 6, :sticky => 'w'
+		@gold_label.grid :column => 0, :row => 7, :sticky => 'e', :padx => 27, :pady => 10
+		@gold_value_label.grid :column => 1, :row => 7, :sticky => 'w'
 
 		# configure resizing behavior
 		TkGrid.propagate(@left_frame, false)
-		TkGrid.propagate(@right_frame, false)
 		TkGrid.columnconfigure(@root, 0, :weight => 1)
 		TkGrid.rowconfigure(@root, 0, :weight => 1)
 		TkGrid.columnconfigure(@content, 0, :weight => 0)
@@ -713,6 +845,19 @@ class Game
 		@x_label.grid :column => 0, :row => 0, :sticky => 'nw', :padx => x_loc, :pady => y_loc
 	end
 
+	def adjust_stat_labels(strength, dexterity, agility, intellect, constitution, wisdom, charisma, armor, damage, attack_speed)
+		@strength_value_label.text = strength
+		@dexterity_value_label.text = dexterity
+		@agility_value_label.text = agility
+		@intellect_value_label.text = intellect
+		@constitution_value_label.text = constitution
+		@wisdom_value_label.text = wisdom
+		@charisma_value_label.text = charisma
+		@armor_value_label.text = armor
+		@damage_value_label.text = damage
+		@attackspeed_value_label.text = attack_speed
+	end
+
 	# 1) enables the text widget to be edited
 	# 2) inserts string
 	# 3) ensures bottom of text widget is showing
@@ -729,6 +874,7 @@ class Game
 		if state == 'pregame'
 			if text_two.get.casecmp('start') == 0
 				start
+			elsif text_two.get.casecmp('help') == 0
 			else
 				insert_text("To start the game, type 'start'")
 			end
@@ -829,8 +975,13 @@ class Game
 	end
 
 	# print all available player commands.  need to add this.
-	def help
-
+	def help	
+		insert_text("-'move n/s/e/w' to move around the game map")
+		insert_text("-'equipment' to show all items current equipped")
+		insert_text("-'show inventory' to show all items in inventory")
+		insert_text("-'show equippables' to show all equippable items in inventory")
+		insert_text("-'equip itemname' or 'equip inventoryslot' to equip the specified item held in your inventory.")
+		insert_text("-'unequip itemname' to unequip the specified item and place in your inventory.")
 	end
 
 	# test method, Tk.sleep is working
@@ -869,6 +1020,12 @@ class Game
 		else
 			insert_text("That is not a valid move.\n")
 		end
+
+		if rand(100) > 50
+			fight
+		else
+			# do nothing
+		end
 	end
 
 	def get_item_info(item)
@@ -883,6 +1040,12 @@ class Game
 		item_name = item.name
 		item_name_label = Tk::Tile::Label.new(item_info) {text item_name}
 		item_name_label.grid :column => 1, :row => 0, :sticky => 'nw', :pady => 27
+
+		if item.is_a?(MagicalWeapon) || item.is_a?(MagicalArmor)
+			item_name_label.foreground = '#00B200'
+		else
+			# do stuff
+		end
 
 		item_stats = item.to_s
 		item_stats_label = Tk::Tile::Label.new(item_info) {text item_stats}
@@ -936,17 +1099,16 @@ class Game
 		@wisdom_value_label.text = @player.wisdom
 		@charisma_value_label.text = @player.charisma
 		@gold_value_label.text = @player.gold
+		@damage_value_label.text = @player.damage
+		@attackspeed_value_label.text = @player.attack_speed
 		@create_character.destroy
 		insert_text("Welcome to Bloog's Quest, #{name}!")
 		insert_text("To see a list of commands, type 'help'.\n")
-		player.inventory.add_item(@armor[0])
-		player.inventory.add_item(@armor[1])
-		player.inventory.add_item(@armor[2])
-		player.inventory.add_item(@armor[3])
-		player.inventory.add_item(@armor[4])
-		player.inventory.add_item(@armor[5])
-		player.inventory.add_item(@armor[6])
-		player.inventory.add_item(@weapons[0])
+		player.inventory.add_item(MagicalWeapon.new(1, 'Magical Longsword', 'Magical', 'weapon', 10, 10, 'Slashing', 'art_assets/longsword.gif', 
+			5, 0, 0, 0, 0, 0, 0))
+		player.inventory.add_item(MagicalWeapon.new(1, 'Magical Broadsword', 'Magical', 'weapon', 12, 12, 'Slashing', 'art_assets/longsword.gif', 
+			5, 0, 0, 0, 0, 0, 0))
+		player.inventory.add_item(armor[0])
 	end
 end
 

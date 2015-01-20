@@ -3,3 +3,12 @@
 1, Dagger, normal, weapon, 6, 60, Piercing, art_assets/dagger.gif
 1, Mace, normal, weapon, 14, 15, Mace Fighting, art_assets/mace.gif
 1, Axe, normal, weapon, 16, 12, Slashing, art_assets/axe.gif
+1, Viking Sword, normal, weapon, 16, 12, Slashing, art_assets/vikingsword.gif
+1, Quarterstaff, normal, weapon, 16, 12, Mace Fighting, art_assets/quarterstaff.gif
+1, Hatchet, normal, weapon, 16, 12, Slashing, art_assets/hatchet.gif
+1, Club, normal, weapon, 16, 12, Mace Fighting, art_assets/club.gif
+1, Morning Star, normal, weapon, 16, 12, Mace Fighting, art_assets/morningstar/gif
+1, Pitchfork, normal, weapon, 16, 12, Piercing, art_assets/pitchfork.gif
+1, Scimitar, normal, weapon, 16, 12, Slashing, art_assets/scimitar.gif
+1, Spear, normal, weapon, 16, 12, Piercing, art_assets/spear.gif
+1, Cutlass, normal, weapon, 16, 12, Slashing, art_assets/cutlass.gif
